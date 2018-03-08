@@ -14,7 +14,7 @@ helpInfoStr = """
             --libraryJsonList required 指向题库文件的绝对路径
             --sandNum required 从题库中抽取沙子的量
             --sandJsonList required 抽取出的沙子保存到该文件
-            --sandClsRatio optional 沙子类别比例 
+            --sandClsRatio optional 沙子类别比例
                                     eg: --sandClsRatio pulp,sexy,normal,2,2,1
                                     如果没有指定这个参数，那么就随机抽取
         2  : 从题库中抽取沙子 并添加到 日志jsonlist文件中、shuffle 最终文件,生成 jsonlist 文件
@@ -33,6 +33,7 @@ helpInfoStr = """
             ### sandJsonList or libraryJsonList 这两个参数必须要指定一个
             --sandJsonList optional 抽取出的沙子文件
             --libraryJsonList optional 指向题库文件的绝对路径
+            --outputErrorFlag optional 是否保存打标错误的信息 默认 False 不保存
         5  : 根据两份标注数据，取交集，保存
             --labeledJsonList_a required 指向已经打标过的jsonlist 文件
             --labeledJsonList_b required 指向已经打标过的jsonlist 文件
@@ -46,7 +47,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="labelx toolkit", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--actionFlag', required=True,type=int, help="0 or 1 or 2 or 3 or 4")
     parser.add_argument('--dataTypeFlag',default=0,type=int,help="0:class ; 1:cluster ; 2:decect")
-    
+
     # libraryJsonList 指向 题库 jsonlist 文件
     parser.add_argument(
         '--libraryJsonList',help='library json list file absolute path', default=None, type=str)
@@ -58,7 +59,7 @@ def parse_args():
     # 抽出沙子的各类的比例：pulp,sexy,normal,2,2,1
     parser.add_argument(
         '--sandClsRatio', help='class ratio eg : pulp,sexy,normal,2,2,1',default=None, type=str)
-    
+
     # logJsonList 指向 log jsonlist 文件
     parser.add_argument(
         '--logJsonList',help='log jsonlist file  absolute path', default=None, type=str)
@@ -66,6 +67,9 @@ def parse_args():
     parser.add_argument(
         '--addedSandLogJsonList', help='added sand jsonlist file absolute path', default=None, type=str)
     parser.add_argument('--labeledJsonList', help='labeled jsonlist file absolute path', default=None, type=str)
+    # outputErrorFlag 是否保存打标错误的信息 默认 False 不保存
+    parser.add_argument(
+        '--outputErrorFlag', help='if ture then save label error info', default=False, type=bool)
     # labeledJsonList_a 指向 labeled jsonlist 文件
     parser.add_argument(
         '--labeledJsonList_a', help='labeled jsonlist file  absolute path', default=None, type=str)
@@ -97,6 +101,7 @@ def main():
             sandClsRatio_list = args.sandClsRatio.split(',')
         getSand_result = labelX_helper.getSandFromLibrary(
             libraryFile=args.libraryJsonList, sandNum=args.sandNum, sandFile=args.sandJsonList, sandClsRatio=sandClsRatio_list, dataFlag=dataTypeFlag)
+        print("generate sand file is %s" % (getSand_result[1]))
         return 0
         pass
     elif actionFlag == 2:
@@ -149,7 +154,7 @@ def main():
         if not sandFile :
             sandFile = args.libraryJsonList
         acc = labelX_helper.computeAccuracy(
-            sandFile=sandFile, labeledFile=args.labeledJsonList, dataFlag=dataTypeFlag)
+            sandFile=sandFile, labeledFile=args.labeledJsonList, dataFlag=dataTypeFlag, saveErrorFlag=args.outputErrorFlag)
         return 0
         pass
     elif actionFlag == 5:
@@ -170,11 +175,14 @@ def main():
         pass
     else:
         return 3
-    
+
     pass
 if __name__ == '__main__':
     # print(helpInfoStr)
+    print('*'*50)
+    print('*'*20+"  param is :::   "+'*'*20)
     pprint.pprint(args)
+    print('*'*20+"  begin runing   "+'*'*20)
     res = main()
     if res == 1:
         print(helpInfoStr)

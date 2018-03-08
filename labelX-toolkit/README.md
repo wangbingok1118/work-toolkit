@@ -3,7 +3,7 @@
 ## 使用说明
 
 ```
-python labelX_main.py 
+python labelX_main.py
 --actionFlag   1    # 这个指向 具体什么任务的标记 必须要指定
 --dataTypeFlag 0  # 这个指向 打标数据类型 ; 0 分类 1 聚类  2 检测 （默认 0）
 ```
@@ -16,7 +16,7 @@ python labelX_main.py
             --libraryJsonList required 指向题库文件的绝对路径
             --sandNum required 从题库中抽取沙子的量
             --sandJsonList required 抽取出的沙子保存到该文件
-            --sandClsRatio optional 沙子类别比例 
+            --sandClsRatio optional 沙子类别比例
                                     eg: --sandClsRatio pulp,sexy,normal,2,2,1
                                     如果没有指定这个参数，那么就随机抽取
         2  : 从题库中抽取沙子 并添加到 日志jsonlist文件中、shuffle 最终文件,生成 jsonlist 文件
@@ -35,6 +35,7 @@ python labelX_main.py
             ### sandJsonList or libraryJsonList 这两个参数必须要指定一个
             --sandJsonList optional 抽取出的沙子文件
             --libraryJsonList optional 指向题库文件的绝对路径
+            --outputErrorFlag optional 是否输出打标错误的(bool类型),对应的沙子信息，模型 False。保存到 --labeledJsonList 这个指定的文件 + '-SandGT.json' 形成的文件
         5  : 根据两份标注数据，取交集，保存
             --labeledJsonList_a required 指向已经打标过的jsonlist 文件
             --labeledJsonList_b required 指向已经打标过的jsonlist 文件

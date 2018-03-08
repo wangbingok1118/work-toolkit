@@ -38,7 +38,7 @@ def get_jsonList_line_labelInfo(flag=None, line=None):
         cluster
     flag == 2
         detect
-    return key:value 
+    return key:value
             key is url
             value : label info ()
     """
@@ -72,7 +72,7 @@ def judge_labeled_sand_line(sandLine=None,labeledLine=None,flag=0):
     pass
 
 
-    
+
 def getSandFromLibrary(libraryFile=None, sandNum=None, sandFile=None, sandClsRatio=None, dataFlag=0):
     """
         libraryFile : library file name absolute path
@@ -127,7 +127,7 @@ def getSandFromLibrary(libraryFile=None, sandNum=None, sandFile=None, sandClsRat
             f.write('\n'.join(sandList))
             f.write('\n')
         return ['success', sandFile]
-    
+
 
 
 def addSandToLogFile(logFile=None,sandFile=None,resultFile=None,dataFlag=None):
@@ -152,7 +152,7 @@ def addSandToLogFile(logFile=None,sandFile=None,resultFile=None,dataFlag=None):
     return ['success', resultFile]
 
 
-def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0):
+def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=False):
     # 拿到提交的标注结果，核算其中题目的正确率
     sand_dict = dict() # key:value -- url:line
     labeled_dict = dict()
@@ -171,14 +171,15 @@ def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0):
             if len(line) <= 0:
                 continue
             key, value = get_jsonList_line_labelInfo(line=line, flag=dataFlag)
+            if not value:
+                withoutLabeledCount += 1
             if key:
                 labeled_dict[key] = line
-            else:
-                withoutLabeledCount += 1
     acc = 0.0
     allSandNum = 0
     accNum = 0
     errNum = 0
+    label_error_list=[]
     for key in labeled_dict.keys():
         if key not in sand_dict:
             # the key is not sand
@@ -193,12 +194,20 @@ def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0):
         if res:
             accNum += 1
         else:
+            label_error_list.append(sand_value_line)
+            # label_error_list.append(labeled_value_line)
             errNum += 1
+    if saveErrorFlag:
+        label_error_jsonlist_file = labeledFile[:labeledFile.rfind('.')]+'-SandGT.json'
+        with open(label_error_jsonlist_file,'w') as f:
+            f.write('\n'.join(label_error_list))
+            f.write('\n')
+        print("Label Error save file is : %s" % (label_error_jsonlist_file))
     print("sand number in the labeled file is %d"%(allSandNum))
     print("sand labeled acc num is %d"%(accNum))
     acc = accNum * 1.0 / allSandNum
-    print("without labeled info count %d\tall label count %d" %
-          (withoutLabeledCount, withoutLabeledCount+len(labeled_dict)))
+    print("without label info count %d\tall label count %d" %
+          (withoutLabeledCount, len(labeled_dict)))
     print("acc is : %f" % (acc))
     return acc
 
@@ -215,7 +224,7 @@ def getUnionInfoFromA_B_laneled(labeled_a_file=None, labeled_b_file=None, union_
             key, value = get_jsonList_line_labelInfo(
                 line=line, flag=dataFlag)
             if not value:
-                continue 
+                continue
             a_dict[key] = [value, line]
     with open(labeled_b_file, 'r') as f:
         for line in f.readlines():
