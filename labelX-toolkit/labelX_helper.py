@@ -24,8 +24,9 @@ def delete_jsonList_line_labelInfo(flag=None, line=None):
     resultLine = None
     if flag == 0:
         line_dict = json.loads(line)
-        line_dict['label']['class']['pulp'] = ''
+        line_dict['label']['class'] = dict()
         resultLine = json.dumps(line_dict)
+        print(resultLine)
     return resultLine
 
 
@@ -49,7 +50,7 @@ def get_jsonList_line_labelInfo(flag=None, line=None):
         key = line_dict['url']
         if 'class' not in line_dict['label']:
             return key, None
-        elif 'pulp' not in line_dict['label']['class']:
+        if 'pulp' not in line_dict['label']['class']:
             return key,None
         else:
             value = line_dict['label']['class']['pulp']
@@ -117,9 +118,18 @@ def getSandFromLibrary(libraryFile=None, sandNum=None, sandFile=None, sandClsRat
         return ['success',sandFile]
     elif len(sandClsRatio) == 0 and dataFlag == 0:
         sandList = []
+        line_list = []
         with open(libraryFile, 'r') as f:
-            line_list = f.readlines()
-            line_list = [i.strip() for i in line_list if len(i.strip()) > 0]
+            for line  in f.readlines():
+                line = line.strip()
+                if len(line) <= 0:
+                    continue
+                img_url, class_label = get_jsonList_line_labelInfo(
+                    line=line, flag=dataFlag)
+                if not class_label:
+                    continue
+                else:
+                     line_list.append(line)
             sandList = random.sample(
                 line_list, sandNum)  # random get sandNum
         with open(sandFile, 'w') as f:
@@ -144,6 +154,7 @@ def addSandToLogFile(logFile=None,sandFile=None,resultFile=None,dataFlag=None):
             if len(line) < 0:
                 continue
             line = delete_jsonList_line_labelInfo(flag=dataFlag,line=line)
+            print(line)
             resultList.append(line)
     random.shuffle(resultList)
     with open(resultFile,'w') as f:
