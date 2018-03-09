@@ -26,6 +26,7 @@ def delete_jsonList_line_labelInfo(flag=None, line=None):
         line_dict = json.loads(line)
         line_dict['label']['class'] = dict()
         resultLine = json.dumps(line_dict)
+        print(resultLine)
     return resultLine
 
 
@@ -153,6 +154,7 @@ def addSandToLogFile(logFile=None,sandFile=None,resultFile=None,dataFlag=None):
             if len(line) < 0:
                 continue
             line = delete_jsonList_line_labelInfo(flag=dataFlag,line=line)
+            print(line)
             resultList.append(line)
     random.shuffle(resultList)
     with open(resultFile,'w') as f:
@@ -188,7 +190,8 @@ def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=F
     allSandNum = 0
     accNum = 0
     errNum = 0
-    label_error_list=[]
+    label_error_sand_list=[]
+    label_error_labelxFile_list=[]
     for key in labeled_dict.keys():
         if key not in sand_dict:
             # the key is not sand
@@ -203,15 +206,23 @@ def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=F
         if res:
             accNum += 1
         else:
-            label_error_list.append(sand_value_line)
-            # label_error_list.append(labeled_value_line)
+            label_error_sand_list.append(sand_value_line)
+            label_error_labelxFile_list.append(labeled_value_line)
             errNum += 1
     if saveErrorFlag:
-        label_error_jsonlist_file = labeledFile[:labeledFile.rfind('.')]+'-SandGT.json'
-        with open(label_error_jsonlist_file,'w') as f:
-            f.write('\n'.join(label_error_list))
+        label_error_sand_jsonlist_file = labeledFile[:labeledFile.rfind('.')]+'-SandGT.json' #sand
+        with open(label_error_sand_jsonlist_file, 'w') as f:
+            f.write('\n'.join(label_error_sand_list))
             f.write('\n')
-        print("Label Error save file is : %s" % (label_error_jsonlist_file))
+        print("Label Error --sand Ground Truth save file is : %s" %
+              (label_error_sand_jsonlist_file))
+        label_error_jsonlist_file = labeledFile[:labeledFile.rfind(
+            '.')]+'-labeledError.json'  # sand
+        with open(label_error_jsonlist_file, 'w') as f:
+            f.write('\n'.join(label_error_labelxFile_list))
+            f.write('\n')
+        print("Label Error --labelX error save file is : %s" %
+              (label_error_jsonlist_file))
     print("sand number in the labeled file is %d"%(allSandNum))
     print("sand labeled acc num is %d"%(accNum))
     acc = accNum * 1.0 / allSandNum

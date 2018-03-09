@@ -33,7 +33,10 @@ helpInfoStr = """
             ### sandJsonList or libraryJsonList 这两个参数必须要指定一个
             --sandJsonList optional 抽取出的沙子文件
             --libraryJsonList optional 指向题库文件的绝对路径
-            --outputErrorFlag optional 是否保存打标错误的信息 默认 False 不保存
+            --outputErrorFlag optional 是否输出打标错误的(bool类型),默认 False。
+                如果 True:
+                    则将打标错误的记录 保存到： --labeledJsonList 这个指定的文件 + '-labeledError.json' 形成的文件
+                    打标错误行--对应的沙子信息，保存到 --labeledJsonList 这个指定的文件 + '-SandGT.json' 形成的文件
         5  : 根据两份标注数据，取交集，保存
             --labeledJsonList_a required 指向已经打标过的jsonlist 文件
             --labeledJsonList_b required 指向已经打标过的jsonlist 文件
