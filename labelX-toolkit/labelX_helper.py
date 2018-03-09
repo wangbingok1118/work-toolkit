@@ -26,7 +26,6 @@ def delete_jsonList_line_labelInfo(flag=None, line=None):
         line_dict = json.loads(line)
         line_dict['label']['class'] = dict()
         resultLine = json.dumps(line_dict)
-        print(resultLine)
     return resultLine
 
 
@@ -154,7 +153,6 @@ def addSandToLogFile(logFile=None,sandFile=None,resultFile=None,dataFlag=None):
             if len(line) < 0:
                 continue
             line = delete_jsonList_line_labelInfo(flag=dataFlag,line=line)
-            print(line)
             resultList.append(line)
     random.shuffle(resultList)
     with open(resultFile,'w') as f:
