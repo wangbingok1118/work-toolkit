@@ -136,3 +136,10 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+"""
+python det-model-score.py \
+--gtXmlBasePath /workspace/data/BK/terror-dataSet-Dir/TERROR-DETECT-V0.9/Annotations \
+--detResultFile /workspace/data/terror-det-Dir/rfcn-Dirs/rfcn-res152-v0.9-t3/TERROR-DETECT-V0.9-test-rf-output.txt \
+--detClassLabelFile /workspace/data/BK/terror-dataSet-Dir/terror-6-class.txt 
+"""

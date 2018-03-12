@@ -114,7 +114,7 @@ def compute_each_class_accuracy(className_detfile_dict=None, gtXmlBasePath=None)
         acc, err, accuracy,recall=voc_eval_noBbox_accuracy(detfile = className_detfile_dict.get(key)[
                                         0], annopath=gtXmlBasePath, imageset_file=className_detfile_dict.get(key)[1], classname=key)
         class_accuracy_dict[key] = [acc, err, accuracy, recall]
-    for key in class_accuracy_dict.keys():
+    for key in sorted(class_accuracy_dict.keys()):
         print("%s  precision: %f " % (
             key, class_accuracy_dict.get(key)[2]))
     print('*'*20+" recall "+"*"*20)

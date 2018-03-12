@@ -158,7 +158,7 @@ def compute_each_class_ap(className_detfile_dict=None, gtXmlBasePath=None):
         rec, prec, ap = voc_eval_noBbox(detfile=className_detfile_dict.get(key)[
                                         0], annopath=gtXmlBasePath, imageset_file=className_detfile_dict.get(key)[1], classname=key,use_07_metric=True)
         class_ap_dict[key] = [rec, prec, ap]
-    for key in class_ap_dict.keys():
+    for key in sorted(class_ap_dict.keys()):
         print("%s ap: %f" % (key, class_ap_dict.get(key)[2]))
     return class_ap_dict
 

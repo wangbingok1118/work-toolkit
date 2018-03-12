@@ -169,7 +169,7 @@ def compute_model_mAP(className_detfile_dict=None, gtXmlBasePath=None):
         rec, prec, ap = voc_eval(detfile=className_detfile_dict.get(key)[0], annopath=gtXmlBasePath, imageset_file=className_detfile_dict.get(key)[1], classname=key, ovthresh=0.5, use_07_metric=True)
         class_ap_dict[key] = [rec, prec, ap]
     mAP = 0
-    for key in class_ap_dict.keys():
+    for key in sorted(class_ap_dict.keys()):
         mAP += class_ap_dict.get(key)[2]
         print("compute mAP process : %s ap: %f" %
               (key, class_ap_dict.get(key)[2]))
