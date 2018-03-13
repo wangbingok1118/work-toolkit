@@ -38,7 +38,7 @@ def get_jsonList_line_labelInfo(flag=None, line=None):
         cluster
     flag == 2
         detect
-    return key:value
+    return key:value 
             key is url
             value : label info ()
     """
@@ -57,6 +57,8 @@ def get_jsonList_line_labelInfo(flag=None, line=None):
 
 
 def judge_labeled_sand_line(sandLine=None,labeledLine=None,flag=0):
+    # print(sandLine)
+    # print(labeledLine)
     result = None
     if flag == 0:
         key_sand,sand_value = get_jsonList_line_labelInfo(flag=flag, line=sandLine)
@@ -72,7 +74,7 @@ def judge_labeled_sand_line(sandLine=None,labeledLine=None,flag=0):
     pass
 
 
-
+    
 def getSandFromLibrary(libraryFile=None, sandNum=None, sandFile=None, sandClsRatio=None, dataFlag=0):
     """
         libraryFile : library file name absolute path
@@ -136,7 +138,7 @@ def getSandFromLibrary(libraryFile=None, sandNum=None, sandFile=None, sandClsRat
             f.write('\n'.join(sandList))
             f.write('\n')
         return ['success', sandFile]
-
+    
 
 
 def addSandToLogFile(logFile=None,sandFile=None,resultFile=None,dataFlag=None):
@@ -230,10 +232,22 @@ def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=F
     return acc
 
 
-def getUnionInfoFromA_B_laneled(labeled_a_file=None, labeled_b_file=None, union_jsonlistFile=None, dataFlag=0):
+def getUnionInfoFromA_B_laneled(labeled_a_file=None, labeled_b_file=None, union_jsonlistFile=None, sandFile=None, dataFlag=0):
     union_labeled_jsonlist = []
     a_dict = dict()
     b_dict = dict()
+    sand_dict = dict()
+    if sandFile:
+        with open(sandFile, 'r') as f:
+            for line in f.readlines():
+                line = line.strip()
+                if len(line) <= 0:
+                    continue
+                key, value = get_jsonList_line_labelInfo(
+                    line=line, flag=dataFlag)
+                if not value:
+                    continue
+                sand_dict[key] = [value, line]
     with open(labeled_a_file, 'r') as f:
         for line in f.readlines():
             line = line.strip()
@@ -242,7 +256,7 @@ def getUnionInfoFromA_B_laneled(labeled_a_file=None, labeled_b_file=None, union_
             key, value = get_jsonList_line_labelInfo(
                 line=line, flag=dataFlag)
             if not value:
-                continue
+                continue 
             a_dict[key] = [value, line]
     with open(labeled_b_file, 'r') as f:
         for line in f.readlines():
@@ -254,10 +268,12 @@ def getUnionInfoFromA_B_laneled(labeled_a_file=None, labeled_b_file=None, union_
             if not value:
                 continue
             b_dict[key] = [value, line]
-
     for key in a_dict.keys():
-        res = judge_labeled_sand_line(sandLine=a_dict.get(key)[
-                                      1], labeledLine=b_dict.get(key)[1], flag=0)
+        if sandFile and key in sand_dict:
+            continue
+        if a_dict.get(key) == None or b_dict.get(key) == None:
+            continue
+        res = judge_labeled_sand_line(sandLine=a_dict.get(key)[1], labeledLine=b_dict.get(key)[1], flag=0)
         if res ==None:
             print("ERROR")
         if res:
@@ -268,22 +284,5 @@ def getUnionInfoFromA_B_laneled(labeled_a_file=None, labeled_b_file=None, union_
     return ['success',union_jsonlistFile]
     pass
 
-# not used
-ERROR_INFO_FLAG={
-    1: {
-        1 : "some params required"
-    },
-    2: {
 
-    },
-    3: {
-
-    },
-    4: {
-
-    },
-    5: {
-
-    }
-
-}
+ERROR_INFO_FLAG=dict()

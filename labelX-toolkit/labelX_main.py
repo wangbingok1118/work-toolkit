@@ -14,7 +14,7 @@ helpInfoStr = """
             --libraryJsonList required 指向题库文件的绝对路径
             --sandNum required 从题库中抽取沙子的量
             --sandJsonList required 抽取出的沙子保存到该文件
-            --sandClsRatio optional 沙子类别比例
+            --sandClsRatio optional 沙子类别比例 
                                     eg: --sandClsRatio pulp,sexy,normal,2,2,1
                                     如果没有指定这个参数，那么就随机抽取
         2  : 从题库中抽取沙子 并添加到 日志jsonlist文件中、shuffle 最终文件,生成 jsonlist 文件
@@ -34,12 +34,13 @@ helpInfoStr = """
             --sandJsonList optional 抽取出的沙子文件
             --libraryJsonList optional 指向题库文件的绝对路径
             --outputErrorFlag optional 是否输出打标错误的(bool类型),默认 False。
-                如果 True:
+                如果 True: 
                     则将打标错误的记录 保存到： --labeledJsonList 这个指定的文件 + '-labeledError.json' 形成的文件
                     打标错误行--对应的沙子信息，保存到 --labeledJsonList 这个指定的文件 + '-SandGT.json' 形成的文件
         5  : 根据两份标注数据，取交集，保存
             --labeledJsonList_a required 指向已经打标过的jsonlist 文件
             --labeledJsonList_b required 指向已经打标过的jsonlist 文件
+            --sandJsonList  optional 指向沙子文件，如果设定这个参数，那么交集结果文件中就不包含打标时候参加进入的沙子了
             --finalUnionJsonList optional 指向 a,b 打标一致的结果文件 ，如果不写的花 labeledJsonList_a-union-labeledJsonList_b*******
     dataTypeFlag :
         0 : class
@@ -50,7 +51,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="labelx toolkit", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--actionFlag', required=True,type=int, help="0 or 1 or 2 or 3 or 4")
     parser.add_argument('--dataTypeFlag',default=0,type=int,help="0:class ; 1:cluster ; 2:decect")
-
+    
     # libraryJsonList 指向 题库 jsonlist 文件
     parser.add_argument(
         '--libraryJsonList',help='library json list file absolute path', default=None, type=str)
@@ -62,7 +63,7 @@ def parse_args():
     # 抽出沙子的各类的比例：pulp,sexy,normal,2,2,1
     parser.add_argument(
         '--sandClsRatio', help='class ratio eg : pulp,sexy,normal,2,2,1',default=None, type=str)
-
+    
     # logJsonList 指向 log jsonlist 文件
     parser.add_argument(
         '--logJsonList',help='log jsonlist file  absolute path', default=None, type=str)
@@ -169,7 +170,7 @@ def main():
             unionFile = args.labeledJsonList_a[:args.labeledJsonList_a.rfind(
                 '.')]+'-union-'+b_file[:b_file.rfind('.')]+'-result-'+labelX_helper.getTimeFlag()+'.json'
         union_result = labelX_helper.getUnionInfoFromA_B_laneled(
-            labeled_a_file=args.labeledJsonList_a, labeled_b_file=args.labeledJsonList_b, union_jsonlistFile=unionFile, dataFlag=dataTypeFlag)
+            labeled_a_file=args.labeledJsonList_a, labeled_b_file=args.labeledJsonList_b, union_jsonlistFile=unionFile, sandFile=args.sandJsonList, dataFlag=dataTypeFlag)
         if union_result[0] == 'success':
             print("generate union file is %s"%(union_result[-1]))
             return 0
@@ -178,7 +179,7 @@ def main():
         pass
     else:
         return 3
-
+    
     pass
 if __name__ == '__main__':
     # print(helpInfoStr)

@@ -36,12 +36,13 @@ python labelX_main.py
             --sandJsonList optional 抽取出的沙子文件
             --libraryJsonList optional 指向题库文件的绝对路径
             --outputErrorFlag optional 是否输出打标错误的(bool类型),默认 False。
-                如果 True:
+                如果 True: 
                     则将打标错误的记录 保存到： --labeledJsonList 这个指定的文件 + '-labeledError.json' 形成的文件
                     打标错误行--对应的沙子信息，保存到 --labeledJsonList 这个指定的文件 + '-SandGT.json' 形成的文件
         5  : 根据两份标注数据，取交集，保存
             --labeledJsonList_a required 指向已经打标过的jsonlist 文件
             --labeledJsonList_b required 指向已经打标过的jsonlist 文件
+            --sandJsonList  optional 指向沙子文件，如果设定这个参数，那么交集结果文件中就不包含打标时候参加进入的沙子了
             --finalUnionJsonList optional 指向 a,b 打标一致的结果文件 ，如果不写的花 labeledJsonList_a-union-labeledJsonList_b*******
     dataTypeFlag :
         0 : class
