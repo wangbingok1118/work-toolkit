@@ -44,6 +44,13 @@ python labelX_main.py
             --labeledJsonList_b required 指向已经打标过的jsonlist 文件
             --sandJsonList  optional 指向沙子文件，如果设定这个参数，那么交集结果文件中就不包含打标时候参加进入的沙子了
             --finalUnionJsonList optional 指向 a,b 打标一致的结果文件 ，如果不写的花 labeledJsonList_a-union-labeledJsonList_b*******
+        6  : 将指向的沙子文件 添加到一个文件夹下的所有 jsonlist 文件中，
+                并 shuffle 生成 jsonlist 文件 保存到新的文件夹中，如：folder : folder-addSand
+                为了方便 直接使用原始的命令行参数了
+            --logJsonList required 指向需要添加沙子的jsonlist文件夹 ;
+            --sandJsonList required 抽取出的沙子文件
+            --addedSandLogJsonList optional 指向添加沙子后形成的新的保存jsonlist文件夹,
+                如果没有指定 则 ***-addsand-timeFlag 作为新的文件夹 
     dataTypeFlag :
         0 : class
         1 : cluster

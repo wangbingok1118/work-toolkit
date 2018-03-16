@@ -9,6 +9,14 @@ import time
 def getTimeFlag():
     return time.strftime("%Y%m%d%H%M%S", time.localtime())
 
+def getFilePath_FileNameNotIncludePostfix(fileName=None):
+    justFileName = os.path.split(fileName)[-1]
+    filePath = os.path.split(fileName)[0]
+    if '.' in justFileName:
+        justFileName = justFileName[:justFileName.rfind('.')]
+    return [filePath, justFileName, os.path.join(filePath, justFileName)]
+    pass
+
 def delete_jsonList_line_labelInfo(flag=None, line=None):
     """
     用于去除 题库中的一行 jsonlist  包含的 label 信息
@@ -20,11 +28,11 @@ def delete_jsonList_line_labelInfo(flag=None, line=None):
         detect
     return : jsonlist line without label info
     """
-    # print(line)
     resultLine = None
     if flag == 0:
         line_dict = json.loads(line)
-        line_dict['label']['class'] = dict()
+        for i_dict in line_dict['label']:
+            i_dict['data'] = list()
         resultLine = json.dumps(line_dict)
     return resultLine
 
@@ -47,14 +55,16 @@ def get_jsonList_line_labelInfo(flag=None, line=None):
     if flag == 0:
         line_dict = json.loads(line)
         key = line_dict['url']
-        if 'class' not in line_dict['label']:
-            return key, None
-        if 'pulp' not in line_dict['label']['class']:
-            return key,None
-        else:
-            value = line_dict['label']['class']['pulp']
+        if line_dict['label'] == None or len(line_dict['label']) == 0:
+            return key ,None
+        label_dict = line_dict['label'][0]
+        if label_dict['data'] == None or len(label_dict['data']) == 0:
+            return key ,None
+        data_dict = label_dict['data'][0]
+        if 'class' not in data_dict or data_dict['class'] == None or len(data_dict['class']) == 0:
+            return key ,None
+        value = data_dict['class']
     return key, value
-
 
 def judge_labeled_sand_line(sandLine=None,labeledLine=None,flag=0):
     # print(sandLine)
@@ -70,8 +80,6 @@ def judge_labeled_sand_line(sandLine=None,labeledLine=None,flag=0):
         else:
             result = False
     return result
-
-    pass
 
 
     
@@ -146,13 +154,13 @@ def addSandToLogFile(logFile=None,sandFile=None,resultFile=None,dataFlag=None):
     with open(logFile,'r') as f:
         for line in f.readlines():
             line = line.strip()
-            if len(line) < 0:
+            if len(line) <= 0:
                 continue
             resultList.append(line)
     with open(sandFile, 'r') as f:
         for line in f.readlines():
             line = line.strip()
-            if len(line) < 0:
+            if len(line) <= 0:
                 continue
             line = delete_jsonList_line_labelInfo(flag=dataFlag,line=line)
             resultList.append(line)
@@ -161,6 +169,25 @@ def addSandToLogFile(logFile=None,sandFile=None,resultFile=None,dataFlag=None):
         f.write('\n'.join(resultList))
         f.write('\n')
     return ['success', resultFile]
+
+
+def addSandToLogFileDir(logFileDir=None, sandFile=None, resultFileDir=None, dataFlag=None):
+    logFileList = os.listdir(logFileDir)
+    logFileList = [fileName for fileName in logFileList if len(
+        fileName) > 0 and fileName[0] != '.']
+    for a_file in logFileList:
+        logFile = os.path.join(logFileDir, a_file)
+        if not os.path.exists(resultFileDir):
+            os.makedirs(resultFileDir)
+        resultFile = os.path.join(resultFileDir,a_file)
+        return_resultFlag, return_resultFile = addSandToLogFile(logFile=logFile, sandFile=sandFile,
+                                           resultFile=resultFile, dataFlag=dataFlag)
+        if return_resultFlag == "success":
+            print("add sand to %s --- success --- %s" %
+                  (logFile, return_resultFile))
+    return ['success', resultFileDir]
+    
+    pass
 
 
 def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=False):
@@ -269,7 +296,7 @@ def getUnionInfoFromA_B_laneled(labeled_a_file=None, labeled_b_file=None, union_
                 continue
             b_dict[key] = [value, line]
     for key in a_dict.keys():
-        if sandFile and key in sand_dict:
+        if sandFile and key in sand_dict: # in sand file ,then the labeled info not put in the union file
             continue
         if a_dict.get(key) == None or b_dict.get(key) == None:
             continue
