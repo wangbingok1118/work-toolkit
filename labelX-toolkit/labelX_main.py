@@ -33,6 +33,7 @@ helpInfoStr = """
             ### sandJsonList or libraryJsonList 这两个参数必须要指定一个
             --sandJsonList optional 抽取出的沙子文件
             --libraryJsonList optional 指向题库文件的绝对路径
+            --iou optional 当检测数据的时候，计算正确率,默认是 0.7 (检测数据)
             --outputErrorFlag optional 是否输出打标错误的(bool类型),默认 False。
                 如果 True: 
                     则将打标错误的记录 保存到： --labeledJsonList 这个指定的文件 + '-labeledError.json' 形成的文件
@@ -48,7 +49,15 @@ helpInfoStr = """
             --logJsonList required 指向需要添加沙子的jsonlist文件夹 ;
             --sandJsonList required 抽取出的沙子文件
             --addedSandLogJsonList optional 指向添加沙子后形成的新的保存jsonlist文件夹,
-                如果没有指定 则 ***-addsand-timeFlag 作为新的文件夹         
+                如果没有指定 则 ***-addsand-timeFlag 作为新的文件夹   
+        7  : 计算指定文件夹下的所有labelx数据的正确率:
+            --logJsonList required 指向需要计算机的jsonlist文件夹 ;
+            --sandJsonList required 用于计算正确率的沙子文件   
+            --iou optional 当检测数据的时候，计算正确率,默认是 0.7（检测数据）
+            --outputErrorFlag optional 是否保存打标错误的记录(bool类型),默认 False。
+                如果 True: 
+                    则将打标错误的记录 保存到： --labeledJsonList 这个指定的文件 + '-labeledError.json' 形成的文件
+                    打标错误行--对应的沙子信息，保存到 --labeledJsonList 这个指定的文件 + '-SandGT.json' 形成的文件   
     dataTypeFlag :
         0 : class
         1 : cluster
@@ -90,6 +99,8 @@ def parse_args():
     # labeledJsfinalUnionJsonListonList_b 指向 union labeled jsonlist 文件
     parser.add_argument(
         '--finalUnionJsonList', help='union labeled jsonlist file  absolute path', default=None, type=str)
+    parser.add_argument(
+        '--iou', help='detect compute bbox iou', default='0.7', type=str)
     args = parser.parse_args()
     return args
 
@@ -170,7 +181,7 @@ def main():
         if not sandFile :
             sandFile = args.libraryJsonList
         acc = labelX_helper.computeAccuracy(
-            sandFile=sandFile, labeledFile=args.labeledJsonList, dataFlag=dataTypeFlag, saveErrorFlag=args.outputErrorFlag)
+            sandFile=sandFile, labeledFile=args.labeledJsonList, dataFlag=dataTypeFlag, saveErrorFlag=args.outputErrorFlag, iou=args.iou)
         return 0
         pass
     elif actionFlag == 5:
@@ -211,6 +222,15 @@ def main():
             return 0
         else:
             return -6
+        pass
+    elif actionFlag == 7:
+        if (not args.labeledJsonList) or ((not args.sandJsonList) and (not args.libraryJsonList)):
+            return 1
+        sandFile = args.sandJsonList
+        if not sandFile:
+            sandFile = args.libraryJsonList
+        labelX_helper.computeAccuracy_Floder(
+            sandFile=sandFile, labeledFile=args.labeledJsonList, dataFlag=dataTypeFlag, saveErrorFlag=args.outputErrorFlag, iou=args.iou)
         pass
     else:
         return 3

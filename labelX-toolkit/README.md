@@ -51,6 +51,15 @@ python labelX_main.py
             --sandJsonList required 抽取出的沙子文件
             --addedSandLogJsonList optional 指向添加沙子后形成的新的保存jsonlist文件夹,
                 如果没有指定 则 ***-addsand-timeFlag 作为新的文件夹 
+        7  : 计算指定文件夹下的所有labelx数据的正确率:
+            --logJsonList required 指向需要计算机的jsonlist文件夹 ;
+            --sandJsonList required 用于计算正确率的沙子文件   
+            --iou optional 当检测数据的时候，计算正确率,默认是 0.7（检测数据）
+            --outputErrorFlag optional 是否保存打标错误的记录(bool类型),默认 False。
+                如果 True: 
+                    则将打标错误的记录 保存到： --labeledJsonList 这个指定的文件 + '-labeledError.json' 形成的文件
+                    打标错误行--对应的沙子信息，保存到 --labeledJsonList 这个指定的文件 + '-SandGT.json' 形成的文件   
+    
     dataTypeFlag :
         0 : class
         1 : cluster
