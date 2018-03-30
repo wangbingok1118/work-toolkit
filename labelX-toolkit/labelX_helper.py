@@ -363,8 +363,8 @@ def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=F
         allSandNum = 0
         accNum = 0
         errNum = 0
-        withoutLabeled_isPulpCount = 0
-        errorLabeled_sandIsPulpCount = 0
+        sandIsPulp_labeledIsNotPulp_Num=0
+        sandIsNotPulp_labeledIsPulp_Num=0
         label_error_sand_list = []
         label_error_labelxFile_list = []
         for key in labeled_dict.keys():
@@ -387,11 +387,11 @@ def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=F
             # get without labeled pulp
             sand_value = res[1][0]
             labeled_value = res[1][1]
-            if sand_value == "pulp":
-                if labeled_value == None:
-                    withoutLabeled_isPulpCount += 1
-                elif labeled_value != "pulp":
-                    errorLabeled_sandIsPulpCount += 1
+            if sand_value == "pulp" and labeled_value!="pulp":
+                sandIsPulp_labeledIsNotPulp_Num += 1
+            elif sand_value != "pulp" and labeled_value == "pulp"
+                sandIsNotPulp_labeledIsPulp_Num += 1
+                pass
         if saveErrorFlag==True:
             label_error_sand_jsonlist_file = getFilePath_FileNameNotIncludePostfix(
                 fileName=labeledFile)[2]+'-SandGT.json'  # sand
@@ -410,12 +410,12 @@ def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=F
         print("sand number in the labeled file is %d" % (allSandNum))
         print("sand labeled acc num is %d" % (accNum))
         acc = accNum * 1.0 / allSandNum
-        print("LABEL FILE : without labeled info count %d\tall labeled count %d" %
+        print("LABEL FILE : without labeledInfo count %d\tall Count %d" %
               (withoutLabeledCount, len(labeled_dict)))
-        print("In Sand : without label and is pulp num  : %d " %
-              (withoutLabeled_isPulpCount))
-        print("In Sand :is pulp but labeled error num  : %d " %
-              (errorLabeled_sandIsPulpCount))
+        print("sand is pulp but labeled is not pulp num : %d" %
+              (sandIsPulp_labeledIsNotPulp_Num))
+        pritn("sand is not pulp but labeled is pulp num : %d" %
+              (sandIsNotPulp_labeledIsPulp_Num))
         print("acc is : %.2f" % (acc*100))
         return acc
     elif dataFlag == 2:  # class
@@ -469,10 +469,12 @@ def computeAccuracy_Floder(sandFile=None, labeledFile=None, dataFlag=0, saveErro
     labeledFileList = [fileName for fileName in labeledFileList if len(
         fileName) > 0 and fileName[0] != '.']
     for a_file in labeledFileList:
-        labeledFile = os.path.join(labeledFile, a_file)
+        if "labeledError" in a_file:
+            continue
+        a_file = os.path.join(labeledFile, a_file)
         print("*"*80)
-        print("begin process file %s" % (labeledFile))
-        computeAccuracy(sandFile=sandFile, labeledFile=labeledFile,
+        print("begin process file %s" % (a_file))
+        computeAccuracy(sandFile=sandFile, labeledFile=a_file,
                         dataFlag=dataFlag, saveErrorFlag=saveErrorFlag, iou=iou)
     pass
 

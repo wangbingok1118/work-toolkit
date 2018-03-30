@@ -224,13 +224,13 @@ def main():
             return -6
         pass
     elif actionFlag == 7:
-        if (not args.labeledJsonList) or ((not args.sandJsonList) and (not args.libraryJsonList)):
+        if (not args.logJsonList) or ((not args.sandJsonList) and (not args.libraryJsonList)):
             return 1
         sandFile = args.sandJsonList
         if not sandFile:
             sandFile = args.libraryJsonList
         labelX_helper.computeAccuracy_Floder(
-            sandFile=sandFile, labeledFile=args.labeledJsonList, dataFlag=dataTypeFlag, saveErrorFlag=args.outputErrorFlag, iou=args.iou)
+            sandFile=sandFile, labeledFile=args.logJsonList, dataFlag=dataTypeFlag, saveErrorFlag=args.outputErrorFlag, iou=args.iou)
         pass
     else:
         return 3
