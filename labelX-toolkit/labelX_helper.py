@@ -389,7 +389,7 @@ def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=F
             labeled_value = res[1][1]
             if sand_value == "pulp" and labeled_value!="pulp":
                 sandIsPulp_labeledIsNotPulp_Num += 1
-            elif sand_value != "pulp" and labeled_value == "pulp"
+            elif sand_value != "pulp" and labeled_value == "pulp":
                 sandIsNotPulp_labeledIsPulp_Num += 1
                 pass
         if saveErrorFlag==True:
@@ -414,7 +414,7 @@ def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=F
               (withoutLabeledCount, len(labeled_dict)))
         print("sand is pulp but labeled is not pulp num : %d" %
               (sandIsPulp_labeledIsNotPulp_Num))
-        pritn("sand is not pulp but labeled is pulp num : %d" %
+        print("sand is not pulp but labeled is pulp num : %d" %
               (sandIsNotPulp_labeledIsPulp_Num))
         print("acc is : %.2f" % (acc*100))
         return acc
@@ -469,7 +469,7 @@ def computeAccuracy_Floder(sandFile=None, labeledFile=None, dataFlag=0, saveErro
     labeledFileList = [fileName for fileName in labeledFileList if len(
         fileName) > 0 and fileName[0] != '.']
     for a_file in labeledFileList:
-        if "labeledError" in a_file:
+        if "labeledError" in a_file or "SandGT" in a_file:
             continue
         a_file = os.path.join(labeledFile, a_file)
         print("*"*80)
@@ -528,6 +528,48 @@ def getUnionInfoFromA_B_laneled(labeled_a_file=None, labeled_b_file=None, union_
         f.write('\n'.join(union_labeled_jsonlist))
         f.write('\n')
     return ['success',union_jsonlistFile]
+    pass
+
+
+
+
+def excludeSand(sandFile=None,labeledFile=None,saveExcludeFile=None,dataFlag=2):
+    print(labeledFile)
+    print(saveExcludeFile)
+    labeledWithoutSand_list=[]
+    sand_dict = dict() # key:value -- url:line
+    with open(sandFile, 'r') as f:
+        for line in f.readlines():
+            line = line.strip()
+            if len(line) <= 0:
+                continue
+            key, value = get_jsonList_line_labelInfo(line=line, flag=dataFlag)
+            if key:
+                sand_dict[key] = line
+    with open(labeledFile, 'r') as f:
+        for line in f.readlines():
+            line = line.strip()
+            if len(line) <= 0:
+                continue
+            key, value = get_jsonList_line_labelInfo(line=line, flag=dataFlag)
+            if key and key not in sand_dict and value != None:
+                labeledWithoutSand_list.append(line)
+    with open(saveExcludeFile,'w') as f:
+        f.write('\n'.join(labeledWithoutSand_list))
+        f.write('\n')
+    pass
+
+def excludeSand_Floder(sandFile=None, labeledFile=None, dataFlag=2):
+    labeledFileList = sorted(os.listdir(labeledFile))
+    saveExcludeFile_dir = labeledFile+'-excludeSand'
+    if not os.path.exists(saveExcludeFile_dir):
+        os.makedirs(saveExcludeFile_dir)
+    labeledFileList = [fileName for fileName in labeledFileList if len(
+        fileName) > 0 and fileName[0] != '.']
+    for a_file in labeledFileList:
+        a_labeledFile = os.path.join(labeledFile,a_file)
+        a_saveExcludeFile = os.path.join(saveExcludeFile_dir,a_file)
+        excludeSand(sandFile=sandFile,labeledFile=a_labeledFile,saveExcludeFile=a_saveExcludeFile,dataFlag=dataFlag)
     pass
 
 
