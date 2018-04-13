@@ -16,7 +16,7 @@ python labelX_main.py
             --libraryJsonList required 指向题库文件的绝对路径
             --sandNum required 从题库中抽取沙子的量
             --sandJsonList required 抽取出的沙子保存到该文件
-            --sandClsRatio optional 沙子类别比例
+            --sandClsRatio optional 沙子类别比例 
                                     eg: --sandClsRatio pulp,sexy,normal,2,2,1
                                     如果没有指定这个参数，那么就随机抽取
         2  : 从题库中抽取沙子 并添加到 日志jsonlist文件中、shuffle 最终文件,生成 jsonlist 文件
@@ -35,6 +35,7 @@ python labelX_main.py
             ### sandJsonList or libraryJsonList 这两个参数必须要指定一个
             --sandJsonList optional 抽取出的沙子文件
             --libraryJsonList optional 指向题库文件的绝对路径
+            --iou optional 当检测数据的时候，计算正确率,默认是 0.7 (检测数据)
             --outputErrorFlag optional 是否输出打标错误的(bool类型),默认 False。
                 如果 True: 
                     则将打标错误的记录 保存到： --labeledJsonList 这个指定的文件 + '-labeledError.json' 形成的文件
@@ -50,15 +51,19 @@ python labelX_main.py
             --logJsonList required 指向需要添加沙子的jsonlist文件夹 ;
             --sandJsonList required 抽取出的沙子文件
             --addedSandLogJsonList optional 指向添加沙子后形成的新的保存jsonlist文件夹,
-                如果没有指定 则 ***-addsand-timeFlag 作为新的文件夹 
+                如果没有指定 则 ***-addsand-timeFlag 作为新的文件夹   
         7  : 计算指定文件夹下的所有labelx数据的正确率:
-            --logJsonList required 指向需要计算机的jsonlist文件夹 ;
+            --logJsonList required 指向需要计算的jsonlist文件夹 ;
             --sandJsonList required 用于计算正确率的沙子文件   
             --iou optional 当检测数据的时候，计算正确率,默认是 0.7（检测数据）
             --outputErrorFlag optional 是否保存打标错误的记录(bool类型),默认 False。
                 如果 True: 
                     则将打标错误的记录 保存到： --labeledJsonList 这个指定的文件 + '-labeledError.json' 形成的文件
-                    打标错误行--对应的沙子信息，保存到 --labeledJsonList 这个指定的文件 + '-SandGT.json' 形成的文件   
+                    打标错误行--对应的沙子信息，保存到 --labeledJsonList 这个指定的文件 + '-SandGT.json' 形成的文件
+        8   :从打标过的数据集中去除添加的沙子，（将没有标注信息的图片也去除了)
+            --logJsonList required 指向需要去除的打标过的jsonlist文件夹 ;
+            --sandJsonList required 指向沙子文件
+            默认生成 logJsonList+"-excludeSand" 文件夹用于存放去除沙子的文件 
     
     dataTypeFlag :
         0 : class
