@@ -7,8 +7,10 @@ import numpy as np
 import time
 import copy
 
+
 def getTimeFlag():
     return time.strftime("%m%d%H", time.localtime())
+
 
 def getFilePath_FileNameNotIncludePostfix(fileName=None):
     justFileName = os.path.split(fileName)[-1]
@@ -17,6 +19,7 @@ def getFilePath_FileNameNotIncludePostfix(fileName=None):
         justFileName = justFileName[:justFileName.rfind('.')]
     return [filePath, justFileName, os.path.join(filePath, justFileName)]
     pass
+
 
 def delete_jsonList_line_labelInfo(flag=None, line=None):
     """
@@ -142,6 +145,7 @@ def judge_labeled_sand_line(sandLine=None, labeledLine=None, flag=0, thresholdIo
             return [accBboxNum,errorBboxNum,allSandNum,allLabeledNum,sand_and_error_bbox_list]
     """
     result = []
+
     def getBestMatchBbox(pre_bbox=None, sand_value=None, sand_bbox_flag=None):
         """
             这个函数用于 找到  pre_bbox 在 沙子中 最大匹配的bbox 
@@ -157,29 +161,39 @@ def judge_labeled_sand_line(sandLine=None, labeledLine=None, flag=0, thresholdIo
             if temp_iou > max_iou:
                 max_iou = temp_iou
                 max_index = index
-        return [max_index,max_iou]
+        return [max_index, max_iou]
     if flag == 0:
-        key_sand,sand_value = get_jsonList_line_labelInfo(flag=flag, line=sandLine)
+        key_sand, sand_value = get_jsonList_line_labelInfo(
+            flag=flag, line=sandLine)
         key_labeled, labeled_value = get_jsonList_line_labelInfo(
             flag=flag, line=labeledLine)
-        assert key_sand == key_labeled, "judge_labeled_sand_line error %s , %s" % (key_sand, key_labeled)
+        assert key_sand == key_labeled, "judge_labeled_sand_line error %s , %s" % (
+            key_sand, key_labeled)
         if sand_value == labeled_value:
             result.append(True)
         else:
             result.append(False)
         result.append([sand_value, labeled_value])
+        """
+            if class:
+            result : len(result) ==  2 ; first element is True or False ;second element is [sand_value, labeled_value]
+            [
+                True or False,
+                [sand_value, labeled_value]
+            ]
+        """
     elif flag == 2:
         accBboxNum = 0
         errorBboxNum = 0
-        sand_and_error_bbox_list=[]
+        sand_and_error_bbox_list = []
         key_sand, sand_value = get_jsonList_line_labelInfo(
             flag=flag, line=sandLine)
         key_labeled, labeled_value = get_jsonList_line_labelInfo(
             flag=flag, line=labeledLine)
-        if sand_value==None:
-            sand_value=[]
-        if labeled_value==None:
-            labeled_value=[]
+        if sand_value == None:
+            sand_value = []
+        if labeled_value == None:
+            labeled_value = []
         allSandNum = len(sand_value)
         allLabeledNum = len(labeled_value)
         sand_bbox_flag = [True for i in range(allSandNum)]
@@ -203,7 +217,6 @@ def judge_labeled_sand_line(sandLine=None, labeledLine=None, flag=0, thresholdIo
     return result
 
 
-    
 def getSandFromLibrary(libraryFile=None, sandNum=None, sandFile=None, sandClsRatio=None, dataFlag=0):
     """
         libraryFile : library file name absolute path
@@ -212,15 +225,16 @@ def getSandFromLibrary(libraryFile=None, sandNum=None, sandFile=None, sandClsRat
         sandClsRatio : type list eg : ['pulp', 'sexy', 'normal', '2', '2', '1']
         dataFlag : class or cluster or detect
     """
-    if len(sandClsRatio)>0 and dataFlag == 0:
+    if len(sandClsRatio) > 0 and dataFlag == 0:
         sandList = []
-        library_dict = dict() # key--classLabel : value--list
+        library_dict = dict()  # key--classLabel : value--list
         with open(libraryFile, 'r') as f:
             for line in f.readlines():
                 line = line.strip()
                 if len(line) <= 0:
                     continue
-                img_url, class_label = get_jsonList_line_labelInfo(line=line, flag=dataFlag)
+                img_url, class_label = get_jsonList_line_labelInfo(
+                    line=line, flag=dataFlag)
                 if class_label == None:
                     continue
                 if class_label in library_dict:
@@ -229,7 +243,8 @@ def getSandFromLibrary(libraryFile=None, sandNum=None, sandFile=None, sandClsRat
                     library_dict[class_label] = [line]
         class_label_length = int(len(sandClsRatio) / 2)
         class_label_ratio = [int(i) for i in sandClsRatio[class_label_length:]]
-        class_label_Num = [i*(sandNum / np.sum(class_label_ratio)) for i in class_label_ratio]
+        class_label_Num = [i*(sandNum / np.sum(class_label_ratio))
+                           for i in class_label_ratio]
         class_label_Num = [int(i) for i in class_label_Num]
         if np.sum(class_label_Num) < sandNum:
             class_label_Num[-1] = sandNum - np.sum(class_label_Num[:-1])
@@ -237,20 +252,21 @@ def getSandFromLibrary(libraryFile=None, sandNum=None, sandFile=None, sandClsRat
             label = sandClsRatio[i]
             num = class_label_Num[i]
             if len(library_dict.get(label)) < num:
-                print("library : class %s count %d < sand %d " %(label, len(library_dict.get(label)),num))
+                print("library : class %s count %d < sand %d " %
+                      (label, len(library_dict.get(label)), num))
                 return "Error"
             for line in random.sample(library_dict.get(label), num):
                 sandList.append(line)
-        with open(sandFile,'w') as f:
+        with open(sandFile, 'w') as f:
             # random.shuffle(sandList)
             f.write('\n'.join(sandList))
             f.write('\n')
-        return ['success',sandFile]
+        return ['success', sandFile]
     elif len(sandClsRatio) == 0 and dataFlag == 0:
         sandList = []
         line_list = []
         with open(libraryFile, 'r') as f:
-            for line  in f.readlines():
+            for line in f.readlines():
                 line = line.strip()
                 if len(line) <= 0:
                     continue
@@ -288,12 +304,11 @@ def getSandFromLibrary(libraryFile=None, sandNum=None, sandFile=None, sandClsRat
             f.write('\n'.join(sandList))
             f.write('\n')
         return ['success', sandFile]
-    
 
 
-def addSandToLogFile(logFile=None,sandFile=None,resultFile=None,dataFlag=None):
-    resultList=[]
-    with open(logFile,'r') as f:
+def addSandToLogFile(logFile=None, sandFile=None, resultFile=None, dataFlag=None):
+    resultList = []
+    with open(logFile, 'r') as f:
         for line in f.readlines():
             line = line.strip()
             if len(line) <= 0:
@@ -304,10 +319,10 @@ def addSandToLogFile(logFile=None,sandFile=None,resultFile=None,dataFlag=None):
             line = line.strip()
             if len(line) <= 0:
                 continue
-            line = delete_jsonList_line_labelInfo(flag=dataFlag,line=line)
+            line = delete_jsonList_line_labelInfo(flag=dataFlag, line=line)
             resultList.append(line)
     random.shuffle(resultList)
-    with open(resultFile,'w') as f:
+    with open(resultFile, 'w') as f:
         f.write('\n'.join(resultList))
         f.write('\n')
     return ['success', resultFile]
@@ -321,19 +336,20 @@ def addSandToLogFileDir(logFileDir=None, sandFile=None, resultFileDir=None, data
         logFile = os.path.join(logFileDir, a_file)
         if not os.path.exists(resultFileDir):
             os.makedirs(resultFileDir)
-        resultFile = os.path.join(resultFileDir,a_file)
+        resultFile = os.path.join(resultFileDir, a_file)
         return_resultFlag, return_resultFile = addSandToLogFile(logFile=logFile, sandFile=sandFile,
-                                           resultFile=resultFile, dataFlag=dataFlag)
+                                                                resultFile=resultFile, dataFlag=dataFlag)
         if return_resultFlag == "success":
             print("add sand to %s --- success --- %s" %
                   (logFile, return_resultFile))
     return ['success', resultFileDir]
-    
+
     pass
 
-def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=False,iou=0.7):
+
+def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=False, iou=0.7):
     # 拿到提交的标注结果，核算其中题目的正确率
-    sand_dict = dict() # key:value -- url:line
+    sand_dict = dict()  # key:value -- url:line
     labeled_dict = dict()
     with open(sandFile, 'r') as f:
         for line in f.readlines():
@@ -358,13 +374,13 @@ def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=F
                 if key in labeled_dict.keys():
                     print("WARNING : label file : %s appear more than once " % (key))
                 labeled_dict[key] = line
-    if dataFlag == 0: # class
+    if dataFlag == 0:  # class
         acc = 0.0
         allSandNum = 0
         accNum = 0
         errNum = 0
-        sandIsPulp_labeledIsNotPulp_Num=0
-        sandIsNotPulp_labeledIsPulp_Num=0
+        sandIsPulp_labeledIsNotPulp_Num = 0
+        sandIsNotPulp_labeledIsPulp_Num = 0
         label_error_sand_list = []
         label_error_labelxFile_list = []
         for key in labeled_dict.keys():
@@ -387,12 +403,12 @@ def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=F
             # get without labeled pulp
             sand_value = res[1][0]
             labeled_value = res[1][1]
-            if sand_value == "pulp" and labeled_value!="pulp":
+            if sand_value == "pulp" and labeled_value != "pulp":
                 sandIsPulp_labeledIsNotPulp_Num += 1
             elif sand_value != "pulp" and labeled_value == "pulp":
                 sandIsNotPulp_labeledIsPulp_Num += 1
                 pass
-        if saveErrorFlag==True:
+        if saveErrorFlag == True:
             label_error_sand_jsonlist_file = getFilePath_FileNameNotIncludePostfix(
                 fileName=labeledFile)[2]+'-SandGT.json'  # sand
             with open(label_error_sand_jsonlist_file, 'w') as f:
@@ -418,7 +434,7 @@ def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=F
               (sandIsNotPulp_labeledIsPulp_Num))
         print("acc is : %.2f" % (acc*100))
         return acc
-    elif dataFlag == 2:  # class
+    elif dataFlag == 2:  # detect
         thresholdIout = float(iou)
         acc = 0.0
         allSandImageNum = 0
@@ -443,9 +459,11 @@ def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=F
                 errSandBBoxNum += res[1]
                 if len(res[4]) > 0:
                     sand_value_line_dict = json.loads(sand_value_line)
-                    temp_sand_value_line_dict = copy.deepcopy(sand_value_line_dict)
+                    temp_sand_value_line_dict = copy.deepcopy(
+                        sand_value_line_dict)
                     temp_sand_value_line_dict['label'][0]['data'] = res[4]
-                    label_error_sand_list.append(json.dumps(temp_sand_value_line_dict))
+                    label_error_sand_list.append(
+                        json.dumps(temp_sand_value_line_dict))
         if saveErrorFlag:
             label_error_sand_jsonlist_file = getFilePath_FileNameNotIncludePostfix(
                 fileName=labeledFile)[2]+'-labeledError.json'
@@ -478,6 +496,7 @@ def computeAccuracy_Floder(sandFile=None, labeledFile=None, dataFlag=0, saveErro
                         dataFlag=dataFlag, saveErrorFlag=saveErrorFlag, iou=iou)
     pass
 
+
 def getUnionInfoFromA_B_laneled(labeled_a_file=None, labeled_b_file=None, union_jsonlistFile=None, sandFile=None, dataFlag=0):
     union_labeled_jsonlist = []
     a_dict = dict()
@@ -497,12 +516,12 @@ def getUnionInfoFromA_B_laneled(labeled_a_file=None, labeled_b_file=None, union_
     with open(labeled_a_file, 'r') as f:
         for line in f.readlines():
             line = line.strip()
-            if len(line) <=0 :
+            if len(line) <= 0:
                 continue
             key, value = get_jsonList_line_labelInfo(
                 line=line, flag=dataFlag)
             if not value:
-                continue 
+                continue
             a_dict[key] = [value, line]
     with open(labeled_b_file, 'r') as f:
         for line in f.readlines():
@@ -515,29 +534,27 @@ def getUnionInfoFromA_B_laneled(labeled_a_file=None, labeled_b_file=None, union_
                 continue
             b_dict[key] = [value, line]
     for key in a_dict.keys():
-        if sandFile and key in sand_dict: # in sand file ,then the labeled info not put in the union file
+        if sandFile and key in sand_dict:  # in sand file ,then the labeled info not put in the union file
             continue
         if a_dict.get(key) == None or b_dict.get(key) == None:
             continue
-        res = judge_labeled_sand_line(sandLine=a_dict.get(key)[1], labeledLine=b_dict.get(key)[1], flag=0)
-        if res ==None:
+        res = judge_labeled_sand_line(sandLine=a_dict.get(
+            key)[1], labeledLine=b_dict.get(key)[1], flag=0)
+        if res == None:
             print("ERROR")
-        if res:
+        if res[0]:
             union_labeled_jsonlist.append(a_dict.get(key)[1])
     with open(union_jsonlistFile, 'w') as f:
         f.write('\n'.join(union_labeled_jsonlist))
         f.write('\n')
-    return ['success',union_jsonlistFile]
+    return ['success', union_jsonlistFile]
     pass
 
-
-
-
-def excludeSand(sandFile=None,labeledFile=None,saveExcludeFile=None,dataFlag=2):
+def excludeSand(sandFile=None, labeledFile=None, saveExcludeFile=None, dataFlag=2):
     print(labeledFile)
     print(saveExcludeFile)
-    labeledWithoutSand_list=[]
-    sand_dict = dict() # key:value -- url:line
+    labeledWithoutSand_list = []
+    sand_dict = dict()  # key:value -- url:line
     with open(sandFile, 'r') as f:
         for line in f.readlines():
             line = line.strip()
@@ -554,10 +571,11 @@ def excludeSand(sandFile=None,labeledFile=None,saveExcludeFile=None,dataFlag=2):
             key, value = get_jsonList_line_labelInfo(line=line, flag=dataFlag)
             if key and key not in sand_dict and value != None:
                 labeledWithoutSand_list.append(line)
-    with open(saveExcludeFile,'w') as f:
+    with open(saveExcludeFile, 'w') as f:
         f.write('\n'.join(labeledWithoutSand_list))
         f.write('\n')
     pass
+
 
 def excludeSand_Floder(sandFile=None, labeledFile=None, dataFlag=2):
     labeledFileList = sorted(os.listdir(labeledFile))
@@ -567,10 +585,11 @@ def excludeSand_Floder(sandFile=None, labeledFile=None, dataFlag=2):
     labeledFileList = [fileName for fileName in labeledFileList if len(
         fileName) > 0 and fileName[0] != '.']
     for a_file in labeledFileList:
-        a_labeledFile = os.path.join(labeledFile,a_file)
-        a_saveExcludeFile = os.path.join(saveExcludeFile_dir,a_file)
-        excludeSand(sandFile=sandFile,labeledFile=a_labeledFile,saveExcludeFile=a_saveExcludeFile,dataFlag=dataFlag)
+        a_labeledFile = os.path.join(labeledFile, a_file)
+        a_saveExcludeFile = os.path.join(saveExcludeFile_dir, a_file)
+        excludeSand(sandFile=sandFile, labeledFile=a_labeledFile,
+                    saveExcludeFile=a_saveExcludeFile, dataFlag=dataFlag)
     pass
 
 
-ERROR_INFO_FLAG=dict()
+ERROR_INFO_FLAG = dict()
