@@ -67,6 +67,10 @@ helpInfoStr = """
         1 : cluster
         2 : detect
 """
+"""
+    change log :
+    2018-06-05: compute accuracy , classify & detect ,add compute every class accuracy
+"""
 def parse_args():
     parser = argparse.ArgumentParser(description="labelx toolkit", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--actionFlag', required=True,type=int, help="0 or 1 or 2 or 3 or 4")
@@ -129,7 +133,6 @@ def main():
             libraryFile=args.libraryJsonList, sandNum=args.sandNum, sandFile=args.sandJsonList, sandClsRatio=sandClsRatio_list, dataFlag=dataTypeFlag)
         print("generate sand file is %s" % (getSand_result[1]))
         return 0
-        pass
     elif actionFlag == 2:
         sandClsRatio_list = []
         if (not args.libraryJsonList) or (not args.logJsonList) or (not args.sandNum):

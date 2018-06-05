@@ -137,7 +137,7 @@ def get_IOU(bbox_a=None, bbox_b=None):
     return ratio
 
 
-def judge_labeled_sand_line(sandLine=None, labeledLine=None, flag=0, thresholdIout=0.7):
+def judge_labeled_sand_line(sandLine=None, labeledLine=None, flag=0, thresholdIou=0.7):
     """
         flag==0 : class 
             return [True] or [False] 
@@ -146,18 +146,20 @@ def judge_labeled_sand_line(sandLine=None, labeledLine=None, flag=0, thresholdIo
     """
     result = []
 
-    def getBestMatchBbox(pre_bbox=None, sand_value=None, sand_bbox_flag=None):
+    def getBestMatchBbox(sand_bbox=None, labeled_value=None, labeled_bbox_flag=None):
         """
-            这个函数用于 找到  pre_bbox 在 沙子中 最大匹配的bbox 
+            这个函数的作用：根据沙子中的bbox ，遍历 labeled 的bbox , 找到一个可用的，且类别匹配的，最大iou 的 bbox
+            return 
+                index: -1 ,not found 
         """
-        labeled_name = pre_bbox['class']
-        labeled_bbox = pre_bbox['bbox']
+        sand_bbox_name = sand_bbox['class']
+        sand_bbox_bbox = sand_bbox['bbox']
         max_index = -1
         max_iou = 0
-        for index, bbox_dict in enumerate(sand_value):
-            if bbox_dict['class'] != labeled_name or sand_bbox_flag[index] == False:
+        for index, bbox_dict in enumerate(labeled_value):
+            if bbox_dict['class'] != sand_bbox_name or labeled_bbox_flag[index] == False:
                 continue
-            temp_iou = get_IOU(bbox_a=labeled_bbox, bbox_b=bbox_dict['bbox'])
+            temp_iou = get_IOU(bbox_a=sand_bbox_bbox, bbox_b=bbox_dict['bbox'])
             if temp_iou > max_iou:
                 max_iou = temp_iou
                 max_index = index
@@ -196,24 +198,39 @@ def judge_labeled_sand_line(sandLine=None, labeledLine=None, flag=0, thresholdIo
             labeled_value = []
         allSandNum = len(sand_value)
         allLabeledNum = len(labeled_value)
-        sand_bbox_flag = [True for i in range(allSandNum)]
-        for labeled_bbox_dict in labeled_value:
+        labeled_bbox_flag = [True for i in range(allLabeledNum)]
+        class_acc_err_dict = dict() # element : dict {class_name : {acc:num,err:num}}
+        for sand_bbox_dict in sand_value:
             index, iou = getBestMatchBbox(
-                pre_bbox=labeled_bbox_dict, sand_value=sand_value, sand_bbox_flag=sand_bbox_flag)
-            if index != -1 and iou >= thresholdIout:
-                sand_bbox_flag[index] = False
-                accBboxNum += 1
+                sand_bbox=sand_bbox_dict, labeled_value=labeled_value, labeled_bbox_flag=labeled_bbox_flag)
+            sand_bbox_dict_class_name = sand_bbox_dict['class']
+            class_acc_err_dict_element_dict = dict()
+            if sand_bbox_dict_class_name in class_acc_err_dict:
+                class_acc_err_dict_element_dict = class_acc_err_dict.get(
+                    sand_bbox_dict_class_name)
             else:
+                class_acc_err_dict[sand_bbox_dict_class_name] = class_acc_err_dict_element_dict
+                class_acc_err_dict_element_dict['acc'] = 0
+                class_acc_err_dict_element_dict['err'] = 0
+            if index != -1 and iou >= thresholdIou: # sand bbox matched
+                labeled_bbox_flag[index] = False
+                accBboxNum += 1
+                class_acc_err_dict_element_dict['acc'] += 1
+            else:  # sand bbox not match
                 errorBboxNum += 1
-                error_bbox = copy.deepcopy(labeled_bbox_dict)
-                error_bbox['class'] = error_bbox['class']+'_F'
+                class_acc_err_dict_element_dict['err'] += 1
+                error_bbox = copy.deepcopy(sand_bbox_dict)
+                error_bbox['class'] = error_bbox['class']+'_GT'
                 sand_and_error_bbox_list.append(error_bbox)
-        for i, flag in enumerate(sand_bbox_flag):
-            if flag == False:
+            pass
+        for i, flag in enumerate(labeled_bbox_flag): # 由于只计算recall，所以标注的数据里，如果没有匹配上的框，不做处理
+            if flag == False:                        # 只在保存的错误结果文件中存储。
                 continue
-            sand_and_error_bbox_list.append(sand_value[i])
+            error_bbox = copy.deepcopy(labeled_value[i])
+            error_bbox['class'] = error_bbox['class']+'_LB'
+            sand_and_error_bbox_list.append(error_bbox)
         result = [accBboxNum, errorBboxNum, allSandNum,
-                  allLabeledNum, sand_and_error_bbox_list]
+                  allLabeledNum, sand_and_error_bbox_list,class_acc_err_dict]
     return result
 
 
@@ -383,6 +400,7 @@ def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=F
         sandIsNotPulp_labeledIsPulp_Num = 0
         label_error_sand_list = []
         label_error_labelxFile_list = []
+        sand_every_class_accuracy_dict = dict()  
         for key in labeled_dict.keys():
             if key not in sand_dict:
                 # the key is not sand
@@ -392,14 +410,25 @@ def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=F
             labeled_value_line = labeled_dict.get(key)
             res = judge_labeled_sand_line(sandLine=sand_value_line,
                                           labeledLine=labeled_value_line, flag=dataFlag)
+            sand_class_name = res[1][0]
+            temp_acc_err_dict = dict()
+            if sand_class_name in sand_every_class_accuracy_dict:
+                temp_acc_err_dict = sand_every_class_accuracy_dict[sand_class_name]
+            else:
+                sand_every_class_accuracy_dict[sand_class_name] = temp_acc_err_dict
+                temp_acc_err_dict['acc'] = 0
+                temp_acc_err_dict['err'] = 0
             if len(res) == 0:
                 return "Error"
+                exit() # if run this then the code run error ,so stop 
             if res[0]:
                 accNum += 1
+                temp_acc_err_dict['acc'] += 1
             else:
                 label_error_sand_list.append(sand_value_line)
                 label_error_labelxFile_list.append(labeled_value_line)
                 errNum += 1
+                temp_acc_err_dict['err'] += 1
             # get without labeled pulp
             sand_value = res[1][0]
             labeled_value = res[1][1]
@@ -423,6 +452,12 @@ def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=F
                 f.write('\n')
             print("Label Error --labelX error save file is : %s" %
                   (label_error_jsonlist_file))
+        print('*'*15+"  compute per class recall  "+'*'*15)
+        for class_key in sand_every_class_accuracy_dict:
+            temp_class_acc_err_dict = sand_every_class_accuracy_dict[class_key]
+            sand_acc = temp_class_acc_err_dict['acc'] /(temp_class_acc_err_dict['acc']+temp_class_acc_err_dict['err'])
+            print("class name : {class_name: >20s} , acc num : {acc: >5d} , err num : {err: >5d} , recall : {recall: >10f}".format(
+                class_name=class_key, acc=temp_class_acc_err_dict['acc'], err=temp_class_acc_err_dict['err'], recall=sand_acc))
         print("sand number in the labeled file is %d" % (allSandNum))
         print("sand labeled acc num is %d" % (accNum))
         acc = accNum * 1.0 / allSandNum
@@ -435,13 +470,14 @@ def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=F
         print("acc is : %.2f" % (acc*100))
         return acc
     elif dataFlag == 2:  # detect
-        thresholdIout = float(iou)
+        thresholdIou = float(iou)
         acc = 0.0
         allSandImageNum = 0
         allSandBboxNum = 0
         accSandBBoxNum = 0
         errSandBBoxNum = 0
         label_error_sand_list = []
+        all_sand_bbox_acc_err_dict = dict() # 用来存储所有沙子的 每个类别的  ： acc & err num
         for key in labeled_dict.keys():
             if key not in sand_dict:
                 # the key is not sand
@@ -450,7 +486,7 @@ def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=F
             sand_value_line = sand_dict.get(key)
             labeled_value_line = labeled_dict.get(key)
             res = judge_labeled_sand_line(sandLine=sand_value_line,
-                                          labeledLine=labeled_value_line, flag=dataFlag, thresholdIout=thresholdIout)
+                                          labeledLine=labeled_value_line, flag=dataFlag, thresholdIou=thresholdIou)
             if len(res) == 0:
                 return "Error"
             else:
@@ -464,6 +500,20 @@ def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=F
                     temp_sand_value_line_dict['label'][0]['data'] = res[4]
                     label_error_sand_list.append(
                         json.dumps(temp_sand_value_line_dict))
+                # process per class acc num & err num
+                the_key_class_acc_err_dict = res[5]
+                for class_name_key in the_key_class_acc_err_dict: # 遍历这张图的 class : acc & err
+                    class_name_acc_err_dict = the_key_class_acc_err_dict[class_name_key]
+                    temp_acc_err_dict = dict()
+                    if class_name_key in all_sand_bbox_acc_err_dict: # 先判断该类别，是否已有
+                        temp_acc_err_dict = all_sand_bbox_acc_err_dict[class_name_key]
+                    else:
+                        all_sand_bbox_acc_err_dict[class_name_key] = temp_acc_err_dict
+                    for i_key in class_name_acc_err_dict:  # acc , err 遍历统计 acc ,err
+                        if i_key in temp_acc_err_dict:
+                            temp_acc_err_dict[i_key] += class_name_acc_err_dict[i_key]
+                        else:
+                            temp_acc_err_dict[i_key] = class_name_acc_err_dict[i_key]
         if saveErrorFlag:
             label_error_sand_jsonlist_file = getFilePath_FileNameNotIncludePostfix(
                 fileName=labeledFile)[2]+'-labeledError.json'
@@ -472,13 +522,21 @@ def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=F
                 f.write('\n')
             print("Label Error  save file is : %s" %
                   (label_error_sand_jsonlist_file))
+        # compute per class : 
+        print('*'*15+"  compute per class recall  "+'*'*15)
+        for class_key in sorted(all_sand_bbox_acc_err_dict.keys()):
+            temp_class_acc_err_dict = all_sand_bbox_acc_err_dict[class_key]
+            recall = temp_class_acc_err_dict['acc']/(
+                temp_class_acc_err_dict['acc']+temp_class_acc_err_dict['err'])
+            print("class name : {class_name: >20s} , acc num : {acc: >5d} , err num : {err: >5d} , recall : {recall: >10f}".format(
+                class_name=class_key, acc=temp_class_acc_err_dict['acc'], err=temp_class_acc_err_dict['err'], recall=recall))
         print("sand number in the labeled file is %d" % (allSandImageNum))
         print("sand bbox number is %d" % (allSandBboxNum))
         print("acc labeled sand bbox num is %d" % (accSandBBoxNum))
         acc = accSandBBoxNum * 1.0 / allSandBboxNum
         print("without label info count %d\tall label count %d" %
               (withoutLabeledCount, len(labeled_dict)))
-        print("acc is : %.2f" % (acc*100))
+        print("the sand recall is : %.2f" % (acc*100))
         return acc
 
 
@@ -495,7 +553,6 @@ def computeAccuracy_Floder(sandFile=None, labeledFile=None, dataFlag=0, saveErro
         computeAccuracy(sandFile=sandFile, labeledFile=a_file,
                         dataFlag=dataFlag, saveErrorFlag=saveErrorFlag, iou=iou)
     pass
-
 
 def getUnionInfoFromA_B_laneled(labeled_a_file=None, labeled_b_file=None, union_jsonlistFile=None, sandFile=None, dataFlag=0):
     union_labeled_jsonlist = []
