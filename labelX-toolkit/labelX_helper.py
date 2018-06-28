@@ -102,6 +102,31 @@ def get_jsonList_line_labelInfo(flag=None, line=None):
     return key, value
 
 
+def check_labelFile_urlList(labelxFormatFile=None,flag=None):
+    # check url in labelxFormatFile 
+    # input : labelx format file
+    # return : [Flag,messageDict]
+    #           Flag : True or False
+    messageDict = dict() # key: url ,value : count
+    url_count_dict = dict()
+    with open(labelxFormatFile,'r') as f:
+        for line in f.readlines():
+            line = line.strip()
+            if line is not None:
+                url, _ = get_jsonList_line_labelInfo(flag=flag,line=line)
+                if url in url_count_dict: # url already occur
+                    url_count_dict[url] += 1
+                else: # url first occur
+                    url_count_dict[url] = 1
+    for url_key in url_count_dict:
+        if url_count_dict[url_key] > 1:
+            messageDict[url_key] = url_count_dict[url_key]
+    Flag = True
+    if len(messageDict) > 0:
+        Flag = False
+    return [Flag, messageDict]
+
+
 def get_IOU(bbox_a=None, bbox_b=None):
     """
     自定义函数，计算两矩形 IOU，传入为 [[xmin,ymin],[xmax,ymin],[xmax,ymax],[xmin,ymax]]
@@ -242,6 +267,12 @@ def getSandFromLibrary(libraryFile=None, sandNum=None, sandFile=None, sandClsRat
         sandClsRatio : type list eg : ['pulp', 'sexy', 'normal', '2', '2', '1']
         dataFlag : class or cluster or detect
     """
+    #check url
+    res, message = check_labelFile_urlList(labelxFormatFile=libraryFile,flag=dataFlag)
+    if res == False:
+        print("url occur more than once : %s" % (libraryFile))
+        print(message)
+        exit()
     if len(sandClsRatio) > 0 and dataFlag == 0:
         sandList = []
         library_dict = dict()  # key--classLabel : value--list
@@ -342,6 +373,11 @@ def addSandToLogFile(logFile=None, sandFile=None, resultFile=None, dataFlag=None
     with open(resultFile, 'w') as f:
         f.write('\n'.join(resultList))
         f.write('\n')
+    res,message = check_labelFile_urlList(labelxFormatFile=resultFile,flag=dataFlag)
+    if res == False:
+        print("url occur more than once : %s" % (resultFile))
+        print(message)
+        exit()
     return ['success', resultFile]
 
 
@@ -365,6 +401,17 @@ def addSandToLogFileDir(logFileDir=None, sandFile=None, resultFileDir=None, data
 
 
 def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=False, iou=0.7):
+    res , message = check_labelFile_urlList(labelxFormatFile=sandFile,flag=dataFlag)
+    if res == False:
+        print("url occur more than once : %s" % (sandFile))
+        print(message)
+        exit()
+    res, message = check_labelFile_urlList(
+        labelxFormatFile=labeledFile, flag=dataFlag)
+    if res == False:
+        print("url occur more than once : %s" % (labeledFile))
+        print(message)
+        exit()
     # 拿到提交的标注结果，核算其中题目的正确率
     sand_dict = dict()  # key:value -- url:line
     labeled_dict = dict()
@@ -555,6 +602,20 @@ def computeAccuracy_Floder(sandFile=None, labeledFile=None, dataFlag=0, saveErro
     pass
 
 def getUnionInfoFromA_B_laneled(labeled_a_file=None, labeled_b_file=None, union_jsonlistFile=None, sandFile=None, dataFlag=0):
+    
+    res, message = check_labelFile_urlList(
+        labelxFormatFile=labeled_a_file, flag=dataFlag)
+    if res == False:
+        print("url occur more than once : %s" % (labeled_a_file))
+        print(message)
+        exit()
+    res, message = check_labelFile_urlList(
+        labelxFormatFile=labeled_b_file, flag=dataFlag)
+    if res == False:
+        print("url occur more than once : %s" % (labeled_b_file))
+        print(message)
+        exit()
+    
     union_labeled_jsonlist = []
     a_dict = dict()
     b_dict = dict()
@@ -608,8 +669,18 @@ def getUnionInfoFromA_B_laneled(labeled_a_file=None, labeled_b_file=None, union_
     pass
 
 def excludeSand(sandFile=None, labeledFile=None, saveExcludeFile=None, dataFlag=2):
-    print(labeledFile)
-    print(saveExcludeFile)
+    res, message = check_labelFile_urlList(
+        labelxFormatFile=sandFile, flag=dataFlag)
+    if res == False:
+        print("url occur more than once : %s" % (sandFile))
+        print(message)
+        exit()
+    res, message = check_labelFile_urlList(
+        labelxFormatFile=labeledFile, flag=dataFlag)
+    if res == False:
+        print("url occur more than once : %s" % (labeledFile))
+        print(message)
+        exit()
     labeledWithoutSand_list = []
     sand_dict = dict()  # key:value -- url:line
     with open(sandFile, 'r') as f:
