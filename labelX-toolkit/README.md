@@ -1,6 +1,7 @@
 # work-toolkit
 
 ## 使用说明
+python 3 for reacall 
 
 ```
 python labelX_main.py
