@@ -32,7 +32,7 @@ helpInfoStr = """
               参数选择值 ： 0 ： 默认值 （去掉标注信息）
                           1 ： 保留标注信息
                           2 ： 只有检测沙子用到（对标注框进行随机处理）
-            --bboxRandomShuffleRata optional 检测沙子处理（bbox 处理概率 取值范围 [0-1] float)
+            --bboxRandomShuffleRata optional 检测沙子处理（bbox 处理概率 取值范围 [0,1] float)
                只要当 dataTypeFlag==2 && deleteLabeledData == 2  检测沙子情况下，使用。
         4  : 计算标注过的数据 正确率
             --labeledJsonList required 指向已经打标过的jsonlist 文件
@@ -60,7 +60,7 @@ helpInfoStr = """
               参数选择值 ： 0 ： 默认值 （去掉标注信息）
                           1 ： 保留标注信息
                           2 ： 只有检测沙子用到（对标注框进行随机处理）
-            --bboxRandomShuffleRata optional 检测沙子处理（bbox 处理概率 取值范围 [0-1] float)
+            --bboxRandomShuffleRata optional 检测沙子处理（bbox 处理概率 取值范围 [0,1] float)
                只要当 dataTypeFlag==2 && deleteLabeledData == 2  检测沙子情况下，使用。
         7  : 计算指定文件夹下的所有labelx数据的正确率:
             --logJsonList required 指向需要计算的jsonlist文件夹 ;
