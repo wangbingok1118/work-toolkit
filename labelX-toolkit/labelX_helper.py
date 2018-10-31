@@ -6,7 +6,13 @@ import random
 import numpy as np
 import time
 import copy
-
+try:
+    # For Python 3.0 and later
+    from urllib.request import urlopen
+except ImportError:
+    # Fall back to Python 2's urllib2
+    from urllib2 import urlopen
+import cv2
 
 def getTimeFlag():
     return time.strftime("%m%d%H", time.localtime())
@@ -21,7 +27,32 @@ def getFilePath_FileNameNotIncludePostfix(fileName=None):
     pass
 
 
-def delete_jsonList_line_labelInfo(flag=None, line=None):
+def readImage_fun(isUrlFlag=None, imagePath=None):
+    """
+        isUrlFlag == True , then read image from url
+        isUrlFlag == False , then read image from local path
+    """
+    im = None
+    if isUrlFlag == True:
+        try:
+            data = urlopen(imagePath.strip()).read()
+            nparr = np.fromstring(data, np.uint8)
+            if nparr.shape[0] < 1:
+                im = None
+        except:
+            im = None
+        else:
+            im = cv2.imdecode(nparr, 1)
+        finally:
+            return im
+    else:
+        im = cv2.imread(imagePath, cv2.IMREAD_COLOR)
+    if np.shape(im) == ():
+        return None
+    return im
+
+
+def delete_jsonList_line_labelInfo(flag=None, line=None, deleteLabeledData=0, bboxRandomShuffleRata=0.1):
     """
     用于去除 题库中的一行 jsonlist  包含的 label 信息
     flag == 0:
@@ -30,19 +61,57 @@ def delete_jsonList_line_labelInfo(flag=None, line=None):
         cluster
     flag == 2
         detect
-    return : jsonlist line without label info
+    --deleteLabeledData optional 对添加的沙子标注信息处理
+       参数选择值 ： 
+                0 ： 默认值 （去掉标注信息）
+                1 ： 保留标注信息
+                2 ： 只有检测沙子用到（对标注框进行随机处理）
+    --bboxRandomShuffleRata optional 检测沙子处理（bbox 处理概率 取值范围 [0-1] float)
+        只要当 dataTypeFlag==2 && deleteLabeledData == 2  检测沙子情况下，使用。
+    return : jsonlist line with different label info
     """
-    resultLine = None
-    if flag == 0:
+    def get_labex_box(box=None, rate=0.1, img_h=None, img_w=None):
+        x1 = box[0][0]
+        y1 = box[0][1]
+        x2 = box[2][0]
+        y2 = box[2][1]
+        dw = x2 - x1
+        dh = y2 - y1
+        x1 += np.random.choice(np.arange(-1 *
+                                         int(dw * rate), int(dw * rate) + 1))
+        x2 += np.random.choice(np.arange(-1 *
+                                         int(dw * rate), int(dw * rate) + 1))
+        y1 += np.random.choice(np.arange(-1 *
+                                         int(dh * rate), int(dh * rate) + 1))
+        y2 += np.random.choice(np.arange(-1 *
+                                         int(dh * rate), int(dh * rate) + 1))
+        x1 = np.clip(x1, 0, img_w - 1)
+        x2 = np.clip(x2, 0, img_w - 1)
+        y1 = np.clip(y1, 0, img_h - 1)
+        y2 = np.clip(y2, 0, img_h - 1)
+        return [[int(x1), int(y1)], [int(x2), int(y1)], [int(x2), int(y2)], [int(x1), int(y2)]]
+    resultLine = None  
+    if deleteLabeledData == 0:
         line_dict = json.loads(line)
         for i_dict in line_dict['label']:
             i_dict['data'] = list()
         resultLine = json.dumps(line_dict)
-    elif flag == 2:
-        line_dict = json.loads(line)
-        for i_dict in line_dict['label']:
-            i_dict['data'] = list()
-        resultLine = json.dumps(line_dict)
+    elif deleteLabeledData == 1:
+        resultLine = line
+    elif deleteLabeledData == 2:
+        if flag == 2:
+            line_dict = json.loads(line)
+            img = readImage_fun(isUrlFlag=True,imagePath=line_dict['url'])
+            if np.shape(img) == ():
+                raise Exception("sand : %s , url can't read"%(line_dict['url']))
+            img_h , img_w ,_ = img.shape
+            for i_dict in line_dict['label']:
+                for i_bbox_dict in i_dict['data']:
+                    i_bbox_dict['bbox'] = get_labex_box(
+                        i_bbox_dict['bbox'], rate=bboxRandomShuffleRata,img_h=img_h,img_w=img_w)
+            resultLine = json.dumps(line_dict)
+        else:
+            raise Exception("deleteLabeledData == 2 && dataTypeFlag ==2")
     return resultLine
 
 
@@ -354,7 +423,7 @@ def getSandFromLibrary(libraryFile=None, sandNum=None, sandFile=None, sandClsRat
         return ['success', sandFile]
 
 
-def addSandToLogFile(logFile=None, sandFile=None, resultFile=None, dataFlag=None):
+def addSandToLogFile(logFile=None, sandFile=None, resultFile=None, dataFlag=None, deleteLabeledData=0, bboxRandomShuffleRata=0.1):
     resultList = []
     with open(logFile, 'r') as f:
         for line in f.readlines():
@@ -367,7 +436,8 @@ def addSandToLogFile(logFile=None, sandFile=None, resultFile=None, dataFlag=None
             line = line.strip()
             if len(line) <= 0:
                 continue
-            line = delete_jsonList_line_labelInfo(flag=dataFlag, line=line)
+            line = delete_jsonList_line_labelInfo(
+                flag=dataFlag, line=line, deleteLabeledData=deleteLabeledData, bboxRandomShuffleRata=bboxRandomShuffleRata)
             resultList.append(line)
     random.shuffle(resultList)
     with open(resultFile, 'w') as f:
@@ -381,7 +451,7 @@ def addSandToLogFile(logFile=None, sandFile=None, resultFile=None, dataFlag=None
     return ['success', resultFile]
 
 
-def addSandToLogFileDir(logFileDir=None, sandFile=None, resultFileDir=None, dataFlag=None):
+def addSandToLogFileDir(logFileDir=None, sandFile=None, resultFileDir=None, dataFlag=None, deleteLabeledData=0, bboxRandomShuffleRata=0.1):
     logFileList = sorted(os.listdir(logFileDir))
     logFileList = [fileName for fileName in logFileList if len(
         fileName) > 0 and fileName[0] != '.']
@@ -391,7 +461,7 @@ def addSandToLogFileDir(logFileDir=None, sandFile=None, resultFileDir=None, data
             os.makedirs(resultFileDir)
         resultFile = os.path.join(resultFileDir, a_file)
         return_resultFlag, return_resultFile = addSandToLogFile(logFile=logFile, sandFile=sandFile,
-                                                                resultFile=resultFile, dataFlag=dataFlag)
+                                                                resultFile=resultFile, dataFlag=dataFlag, deleteLabeledData=deleteLabeledData, bboxRandomShuffleRata=bboxRandomShuffleRata)
         if return_resultFlag == "success":
             print("add sand to %s --- success --- %s" %
                   (logFile, return_resultFile))

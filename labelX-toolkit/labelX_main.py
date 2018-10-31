@@ -28,6 +28,12 @@ helpInfoStr = """
             --logJsonList required 指向由日志生成的log jsonlist 文件
             --sandJsonList required 抽取出的沙子文件
             --addedSandLogJsonList optional 日志log文件添加沙子后形成的 jsonlist文件,如果没有指定 则 -addsand*******
+            --deleteLabeledData optional 对添加的沙子标注信息处理
+              参数选择值 ： 0 ： 默认值 （去掉标注信息）
+                          1 ： 保留标注信息
+                          2 ： 只有检测沙子用到（对标注框进行随机处理）
+            --bboxRandomShuffleRata optional 检测沙子处理（bbox 处理概率 取值范围 [0-1] float)
+               只要当 dataTypeFlag==2 && deleteLabeledData == 2  检测沙子情况下，使用。
         4  : 计算标注过的数据 正确率
             --labeledJsonList required 指向已经打标过的jsonlist 文件
             ### sandJsonList or libraryJsonList 这两个参数必须要指定一个
@@ -50,6 +56,12 @@ helpInfoStr = """
             --sandJsonList required 抽取出的沙子文件
             --addedSandLogJsonList optional 指向添加沙子后形成的新的保存jsonlist文件夹,
                 如果没有指定 则 ***-addsand-timeFlag 作为新的文件夹   
+            --deleteLabeledData optional 对添加的沙子标注信息处理
+              参数选择值 ： 0 ： 默认值 （去掉标注信息）
+                          1 ： 保留标注信息
+                          2 ： 只有检测沙子用到（对标注框进行随机处理）
+            --bboxRandomShuffleRata optional 检测沙子处理（bbox 处理概率 取值范围 [0-1] float)
+               只要当 dataTypeFlag==2 && deleteLabeledData == 2  检测沙子情况下，使用。
         7  : 计算指定文件夹下的所有labelx数据的正确率:
             --logJsonList required 指向需要计算的jsonlist文件夹 ;
             --sandJsonList required 用于计算正确率的沙子文件   
@@ -88,6 +100,12 @@ def parse_args():
     parser.add_argument(
         '--sandClsRatio', help='class ratio eg : pulp,sexy,normal,2,2,1',default=None, type=str)
     
+    parser.add_argument(
+        '--deleteLabeledData', help='sand labeled info process flag , 0 or 1 or 2', type=int, default=0)
+
+    parser.add_argument(
+        '--bboxRandomShuffleRata', help='sand bbox random shuffle rate , value : [0-1]', type=float, default=0.1)
+
     # logJsonList 指向 log jsonlist 文件
     parser.add_argument(
         '--logJsonList',help='log jsonlist file  absolute path', default=None, type=str)
@@ -173,8 +191,10 @@ def main():
         if not args.addedSandLogJsonList:
             addedSandLogFile = filePath_Name_list[2]+ \
                 '-addedSand-'+labelX_helper.getTimeFlag()+'.json'
+        deleteLabeledData_value = args.deleteLabeledData
+        bboxRandomShuffleRata_value = args.bboxRandomShuffleRata   
         getAddedSandLogJsonList_result = labelX_helper.addSandToLogFile(
-            logFile=args.logJsonList, sandFile=args.sandJsonList, resultFile=addedSandLogFile, dataFlag=dataTypeFlag)
+            logFile=args.logJsonList, sandFile=args.sandJsonList, resultFile=addedSandLogFile, dataFlag=dataTypeFlag, deleteLabeledData=deleteLabeledData_value, bboxRandomShuffleRata=bboxRandomShuffleRata_value)
         if getAddedSandLogJsonList_result[0] == 'success':
             print("generate added sand log file is %s"%(getAddedSandLogJsonList_result[1]))
             return 0
@@ -221,8 +241,10 @@ def main():
             if args.logJsonList[-1] == '/':
                 inputDir = inputDir[:-1]
             addedSandLogFile = inputDir+'-addedSand-'+labelX_helper.getTimeFlag()
+        deleteLabeledData_value = args.deleteLabeledData
+        bboxRandomShuffleRata_value = args.bboxRandomShuffleRata
         res_list_two = labelX_helper.addSandToLogFileDir(
-            logFileDir=args.logJsonList, sandFile=args.sandJsonList, resultFileDir=addedSandLogFile, dataFlag=dataTypeFlag)
+            logFileDir=args.logJsonList, sandFile=args.sandJsonList, resultFileDir=addedSandLogFile, dataFlag=dataTypeFlag, deleteLabeledData=deleteLabeledData_value, bboxRandomShuffleRata=bboxRandomShuffleRata_value)
         if res_list_two[0] == 'success':
             print("generate added sand folder is %s" %
                   (res_list_two[1]))
