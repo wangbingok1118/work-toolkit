@@ -24,6 +24,12 @@ helpInfoStr = """
             --sandClsRatio optional 沙子类别比例 eg: --sandClsRatio pulp,sexy,normal,2,2,1
             --sandJsonList optional 抽取出的沙子保存到该文件,如果不指定该参数，则在log文件名后添加 -sand******* ,作为沙子文件
             --addedSandLogJsonList optional 日志log文件添加沙子后形成的 jsonlist文件,如果没有指定 则 -addsand*******
+            --deleteLabeledData optional 对添加的沙子标注信息处理
+              参数选择值 ： 0 ： 默认值 （去掉标注信息）
+                          1 ： 保留标注信息
+                          2 ： 只有检测沙子用到（对标注框进行随机处理）
+            --bboxRandomShuffleRata optional 检测沙子处理（bbox 处理概率 取值范围 [0,1] float)
+               只要当 dataTypeFlag==2 && deleteLabeledData == 2  检测沙子情况下，使用。
         3  : 将指向的沙子文件 添加到日志log jsonlist 文件中，并 shuffle 生成 jsonlist 文件
             --logJsonList required 指向由日志生成的log jsonlist 文件
             --sandJsonList required 抽取出的沙子文件
@@ -176,8 +182,10 @@ def main():
         getSand_result = labelX_helper.getSandFromLibrary(
             libraryFile=args.libraryJsonList, sandNum=args.sandNum, sandFile=temp_sandJsonList, sandClsRatio=sandClsRatio_list, dataFlag=dataTypeFlag)
         print("generate temp sand file is %s" % (getSand_result[1]))
+        deleteLabeledData_value = args.deleteLabeledData
+        bboxRandomShuffleRata_value = args.bboxRandomShuffleRata
         getAddedSandLogJsonList_result = labelX_helper.addSandToLogFile(
-            logFile=args.logJsonList, sandFile=getSand_result[1], resultFile=addedSandLogFile,dataFlag=dataTypeFlag)
+            logFile=args.logJsonList, sandFile=getSand_result[1], resultFile=addedSandLogFile, dataFlag=dataTypeFlag, deleteLabeledData=deleteLabeledData_value, bboxRandomShuffleRata=bboxRandomShuffleRata_value)
         print("generate added sand log file is %s" %
               (getAddedSandLogJsonList_result[1]))
         return 0

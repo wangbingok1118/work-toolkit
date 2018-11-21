@@ -52,7 +52,7 @@ def readImage_fun(isUrlFlag=None, imagePath=None):
     return im
 
 
-def delete_jsonList_line_labelInfo(flag=None, line=None, deleteLabeledData=0, bboxRandomShuffleRata=0.1):
+def delete_jsonList_line_labelInfo(flag=None, line=None, deleteLabeledData=0, bboxRandomShuffleRata=0.1, allClassName=None):
     """
     用于去除 题库中的一行 jsonlist  包含的 label 信息
     flag == 0:
@@ -65,7 +65,7 @@ def delete_jsonList_line_labelInfo(flag=None, line=None, deleteLabeledData=0, bb
        参数选择值 ： 
                 0 ： 默认值 （去掉标注信息）
                 1 ： 保留标注信息
-                2 ： 只有检测沙子用到（对标注框进行随机处理）
+                2 ： 只有检测沙子用到（对标注框进行随机处理,同时随机改变标注框的类别）
     --bboxRandomShuffleRata optional 检测沙子处理（bbox 处理概率 取值范围 [0-1] float)
         只要当 dataTypeFlag==2 && deleteLabeledData == 2  检测沙子情况下，使用。
     return : jsonlist line with different label info
@@ -109,6 +109,9 @@ def delete_jsonList_line_labelInfo(flag=None, line=None, deleteLabeledData=0, bb
                 for i_bbox_dict in i_dict['data']:
                     i_bbox_dict['bbox'] = get_labex_box(
                         i_bbox_dict['bbox'], rate=bboxRandomShuffleRata,img_h=img_h,img_w=img_w)
+                    if allClassName is not None and len(allClassName) > 0:
+                        print(allClassName)
+                        i_bbox_dict['class'] = allClassName[random.randint(0,len(allClassName) -1 )]
             resultLine = json.dumps(line_dict)
         else:
             raise Exception("deleteLabeledData == 2 && dataTypeFlag ==2")
@@ -431,13 +434,27 @@ def addSandToLogFile(logFile=None, sandFile=None, resultFile=None, dataFlag=None
             if len(line) <= 0:
                 continue
             resultList.append(line)
+    sand_bbox_className_list = []
+    if dataFlag == 2:
+        with open(sandFile,'r') as f:
+            for line in f.readlines():
+                line = line.strip()
+                if len(line) <= 0:
+                    continue
+                _url,label_info = get_jsonList_line_labelInfo(flag=dataFlag,line=line)
+                if label_info is None or len(label_info) <= 0:
+                    continue
+                for i_box in label_info:
+                    class_name = i_box['class']
+                    sand_bbox_className_list.append(class_name)
+        sand_bbox_className_list = list(set(sand_bbox_className_list))
     with open(sandFile, 'r') as f:
         for line in f.readlines():
             line = line.strip()
             if len(line) <= 0:
                 continue
             line = delete_jsonList_line_labelInfo(
-                flag=dataFlag, line=line, deleteLabeledData=deleteLabeledData, bboxRandomShuffleRata=bboxRandomShuffleRata)
+                flag=dataFlag, line=line, deleteLabeledData=deleteLabeledData, bboxRandomShuffleRata=bboxRandomShuffleRata, allClassName=sand_bbox_className_list)
             resultList.append(line)
     random.shuffle(resultList)
     with open(resultFile, 'w') as f:
