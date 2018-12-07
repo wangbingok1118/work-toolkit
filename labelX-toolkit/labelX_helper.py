@@ -110,7 +110,6 @@ def delete_jsonList_line_labelInfo(flag=None, line=None, deleteLabeledData=0, bb
                     i_bbox_dict['bbox'] = get_labex_box(
                         i_bbox_dict['bbox'], rate=bboxRandomShuffleRata,img_h=img_h,img_w=img_w)
                     if allClassName is not None and len(allClassName) > 0:
-                        print(allClassName)
                         i_bbox_dict['class'] = allClassName[random.randint(0,len(allClassName) -1 )]
             resultLine = json.dumps(line_dict)
         else:
@@ -446,6 +445,8 @@ def addSandToLogFile(logFile=None, sandFile=None, resultFile=None, dataFlag=None
                     continue
                 for i_box in label_info:
                     class_name = i_box['class']
+                    if class_name == 'not terror':
+                        continue
                     sand_bbox_className_list.append(class_name)
         sand_bbox_className_list = list(set(sand_bbox_className_list))
     with open(sandFile, 'r') as f:
@@ -488,17 +489,17 @@ def addSandToLogFileDir(logFileDir=None, sandFile=None, resultFileDir=None, data
 
 
 def computeAccuracy(sandFile=None, labeledFile=None, dataFlag=0, saveErrorFlag=False, iou=0.7):
-    res , message = check_labelFile_urlList(labelxFormatFile=sandFile,flag=dataFlag)
-    if res == False:
-        print("url occur more than once : %s" % (sandFile))
-        print(message)
-        exit()
-    res, message = check_labelFile_urlList(
-        labelxFormatFile=labeledFile, flag=dataFlag)
-    if res == False:
-        print("url occur more than once : %s" % (labeledFile))
-        print(message)
-        exit()
+    # res , message = check_labelFile_urlList(labelxFormatFile=sandFile,flag=dataFlag)
+    # if res == False:
+    #     print("url occur more than once : %s" % (sandFile))
+    #     print(message)
+    #     exit()
+    # res, message = check_labelFile_urlList(
+    #     labelxFormatFile=labeledFile, flag=dataFlag)
+    # if res == False:
+    #     print("url occur more than once : %s" % (labeledFile))
+    #     print(message)
+    #     exit()
     # 拿到提交的标注结果，核算其中题目的正确率
     sand_dict = dict()  # key:value -- url:line
     labeled_dict = dict()
@@ -756,18 +757,18 @@ def getUnionInfoFromA_B_laneled(labeled_a_file=None, labeled_b_file=None, union_
     pass
 
 def excludeSand(sandFile=None, labeledFile=None, saveExcludeFile=None, dataFlag=2):
-    res, message = check_labelFile_urlList(
-        labelxFormatFile=sandFile, flag=dataFlag)
-    if res == False:
-        print("url occur more than once : %s" % (sandFile))
-        print(message)
-        exit()
-    res, message = check_labelFile_urlList(
-        labelxFormatFile=labeledFile, flag=dataFlag)
-    if res == False:
-        print("url occur more than once : %s" % (labeledFile))
-        print(message)
-        exit()
+    # res, message = check_labelFile_urlList(
+    #     labelxFormatFile=sandFile, flag=dataFlag)
+    # if res == False:
+    #     print("url occur more than once : %s" % (sandFile))
+    #     print(message)
+    #     exit()
+    # res, message = check_labelFile_urlList(
+    #     labelxFormatFile=labeledFile, flag=dataFlag)
+    # if res == False:
+    #     print("url occur more than once : %s" % (labeledFile))
+    #     print(message)
+    #     exit()
     labeledWithoutSand_list = []
     sand_dict = dict()  # key:value -- url:line
     with open(sandFile, 'r') as f:
@@ -795,6 +796,7 @@ def excludeSand(sandFile=None, labeledFile=None, saveExcludeFile=None, dataFlag=
 def excludeSand_Floder(sandFile=None, labeledFile=None, dataFlag=2):
     labeledFileList = sorted(os.listdir(labeledFile))
     saveExcludeFile_dir = labeledFile+'-excludeSand'
+    print(saveExcludeFile_dir)
     if not os.path.exists(saveExcludeFile_dir):
         os.makedirs(saveExcludeFile_dir)
     labeledFileList = [fileName for fileName in labeledFileList if len(

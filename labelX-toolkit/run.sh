@@ -1,0 +1,2 @@
+count=1&&for i in $(ls /Users/wangbing/QiNiuWordDir/labelx-projects/det-Dir/publish-1126/split_without_sand);do sand=`printf "/Users/wangbing/QiNiuWordDir/labelx-projects/det-Dir/publish-1126/gene_sand/sand_%02d.json" $count` && logFile=/Users/wangbing/QiNiuWordDir/labelx-projects/det-Dir/publish-1126/split_without_sand/$i&& python labelX_main.py --actionFlag 3 --logJsonList $logFile --sandJsonList $sand --deleteLabeledData 2 --bboxRandomShuffleRata 0.3 --dataTypeFlag 2 ;count=$[count+1];done
+
